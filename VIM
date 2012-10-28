@@ -1,0 +1,112 @@
+Vim
+
+=================================================
+description
+=================================================
+
+This is the pre-alpha release of Vimside (Vim Scala IDE).
+Vimside is built upon the ENSIME server:
+github: https://github.com/aemoncannon/ensime
+manual: http://aemoncannon.github.com/ensime/index.html
+
+I have checked the source into github primarily so that
+the source is somewhere other than on my local machines.
+I expect to continue to update the sources on github
+on a pretty reason rate, flushing out the features.
+
+Vimside communicates with the Ensime server using 
+Shougo vimproc ( git://github.com/Shougo/vimproc ),
+a very clean and elegant C-language binding to sockets
+(and also pipes, ptys, files, etc.).
+Vimside also uses Shougo vimshell to launch and communicate with
+the Scala Repl.
+
+The current pre-alpha has only be run against the Ensime
+pre-built ensime_2.9.2-0.9.8.1.tar.gz download.
+
+=================================================
+install details
+=================================================
+
+Currently, the zip file on www.vim.org is, basically,
+empty; its a place holder. 
+To install one must get the source from github
+[githup](http://github.com/megaannum/vimside).
+
+
+If as a developer, one wants fixes as they appear, one can clone the 
+github {Vimside} repository and, as updates appear, copy the files
+over to you Vim home location.
+
+Vim has a number of third-party plugin managers. If you are using one
+you can configure it to automatically download and install {Vimside}.
+
+After unpacking the Vimside directory layout should look like:
+
+    $HOME/.vim/
+      autoload/
+        vimside.vim
+        vimside/
+          " vimside code
+      data/
+        " data that persists between invocations of a plugin
+        vimside/
+            " examples, local test scala/java source tree
+      doc/
+        vimside.txt
+      plugin/
+        vimside.vim
+
+Intalling with vim-addon-manager (VAM)
+
+For more information about vim-addon-manager, see [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager) and [Vim-addon-manager getting started](https://github.com/MarcWeber/vim-addon-manager/blob/master/doc/vim-addon-manager-getting-started.txt)
+
+In your .vimrc, add self as shown below:
+
+    fun SetupVAM()
+
+      ...
+
+      let g:vim_addon_manager = {}
+      let g:vim_addon_manager.plugin_sources = {}
+
+      ....
+
+      let g:vim_addon_manager.plugin_sources['self'] = {'type': 'git', 'url': 'git://github.com/megaannum/self'}
+      let g:vim_addon_manager.plugin_sources['forms'] = {'type': 'git', 'url': 'git://github.com/megaannum/forms'}
+      let g:vim_addon_manager.plugin_sources['vimproc'] = {'type': 'git', 'url': 'git://github.com/Shougo/vimproc'}
+      let g:vim_addon_manager.plugin_sources['vimshell'] = {'type': 'git', 'url': 'git://github.com/Shougo/vimshell'}
+      let g:vim_addon_manager.plugin_sources['vimside'] = {'type': 'git', 'url': 'git://github.com/megaannum/vimside'}
+
+
+      let plugins = [
+        \ 'self',
+        \ 'forms',
+        \ 'vimproc',
+        \ 'vimshell',
+        \ 'vimside'
+        \ ]
+
+      call vam#ActivateAddons(plugins,{'auto_install' : 0})
+
+      ...
+
+    endf
+    call SetupVAM()
+
+Note that to use Vimside, the 'self' and 'forms' libraries above are
+optional. With the 'forms' library, Vimside supports additional 
+features such as a popmenu of commands and the type and package inspectors
+(not yet implemented).
+
+Now start Vim. You will be asked by vim-addon-manager 
+if you would like to download and install the plugins.
+
+In addition, for ENSIME, there are pre-built releases available at:
+https://github.com/aemoncannon/ensime/downloads.
+I highly recommend getting these (Scala 2.9.2 and/or 2.10.0-SNAPSHOT)
+rather than trying to build the Ensime Scala code yourself.
+
+
+Installing with pathogen:
+I do not use pathogen. An example usage would be welcome.

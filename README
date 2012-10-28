@@ -1,0 +1,194 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=4298
+
+This is the pre-alpha release of Vimside (Vim Scala IDE).  Vimside is
+built upon the ENSIME server: github: https://github.com/aemoncannon/ensime
+manual: http://aemoncannon.github.com/ensime/index.html
+
+I expect to continue to update the sources on github frequently, flushing
+out the features.  https://github.com/megaannum/vimside
+
+Vimside communicates with the Ensime server using Shougo vimproc
+( git://github.com/Shougo/vimproc ),
+a very clean and elegant C-language binding to sockets (and also pipes,
+ptys, files, etc.).  Vimside also uses Shougo vimshell to launch and
+communicate with
+the Scala Repl.
+
+The current pre-alpha has only be run against the Ensime pre-built
+ensime_2.9.2-0.9.8.1.tar.gz and ensime_2.10.0-SNAPSHOT-0.9.7.tar.gz
+downloads.
+
+Look at the plugin/vimside.vim file for key mappings: how to start the
+Ensime server and the currently supported commands.
+
+Features:
+
+Vimside is based upon Ensime and, as a result, at the core of Vimside
+are the capabilities of Ensime. These are reflected in the Ensime
+commands supported by Vimside. The full set of Emacs Ensime commands
+and key bindings can be found in comments in the Vimside file
+plugin/Vimside.vim. Of those commands, those with Vim key mappings
+are also in that file and they, basically, reflect that part of Ensime
+that is currently implemented in Vimside. I mirrored the Vim key
+mappings to reflect the Emacs-Ensime key bindings but the user is free
+to define their own mappings. At the top of the Vimside plugin file
+there is code that will source a file called 'plugin_user.vim' located
+in the Vimside 'data' directory: ../data/vimside/plugin_user.vim
+instead of the plugin file if it exists.
+
+Current Supported Ensime Commands:
+
+  Start Ensime
+    This makes sure that the current environment and Option settings are
+    correct and then launches the Ensime backend server. The Ensime server
+    writes a file where it puts the socket port that its client should use.
+    Vimside reads that file, gets the port number, and provides Ensime
+    with configuration information.
+
+  Stop Ensime
+    There is also an autocmd that will kill the Ensime server when the
+    user exists Vim.
+
+  Map <Tab> to Omni-Code Completion in insert mode
+    This mapping maybe overridden by the mapping is some other plugin
+    (like a snipmate binding), So, if it does not seem to work for you
+    list the current mappings and see what is overriding it.
+    Very Useful.
+
+  Symbol At Point
+    With cursor on variable, jump to the definition of its symbol.
+    One can easily jump back and forth.
+    The Emacs key binding uses the Meta key. In GVim I could get this
+    to work and so in GVim the key mapping mirrors the Emacs Ensime
+    key binding. But, with Vim in an XTerm, I could not get the Meta/Alt
+    key to be recognized (and there is NO single place where there is
+    a definitive, failsafe guide for getting Meta/Alt key mappings to
+    work, so I have a different binding for Vim.
+    Very useful.
+    Implementations: 1
+
+  Selection Expand/Contract
+    Select the surrounding syntactic context and easily shrink/grow the
+    selection.
+    Implementations: 2
+
+  Global Public Search
+    Search for method or types through project code using space separated
+    search terms.
+    Useful.
+    Implementations: 1
+
+  Hover To Symbol
+    Place cursor (or mouse) over a variable and its Symbol will be
+    displayed.
+    Cute but requires frequent server polling.
+    Implementations: 3
+
+  Open Browser Info
+    With cursor over Scala/Java variable, type, etc. invoke the associated
+    on-line web api documentation (if it exists).
+    Useful.
+    Implementations: 1
+
+  Use of Symbol At Point
+    List all references to the symbol under the cursor.
+    Very useful.
+    Implementations: 1
+
+  Launch Repl
+    Switch to the Scala interpreter, with project classes in the classpath.
+    TBD: cut/paste code fragments into Repl.
+    Implementations: 1
+
+  Typecheck Current File
+    Typecheck the current file and display errors and warnings.
+    Very useful.
+    Implementations: 1
+
+  Typecheck All Files
+    Typecheck the all files and display errors and warnings.
+    Very useful.
+    Implementations: 1
+
+  Re-Show Errors/Warnings
+    Show all errors and warnings in the project.
+    Very useful.
+    Implementations: 1
+
+  Format Source
+    Format the current Scala source file.
+    Useful.
+    Implementations: 1
+
+  Popup Menu
+    Bring up Popup menu with all Vimside commands (requires Forms library).
+    Useful for folks who have not yet learned the key mappings.
+    Implementations: 1
+
+  Browse Source Roots
+    Directory browser of project sources (project code base).
+    Implementations: 2
+
+  Browse Reference Source Roots
+    Directory browser of project reference sources (Java and Scala libraries).
+    Implementations: 2
+
+  Option Viewer/Editor
+    Bring up the Option Viewer/Editor (requires Forms library). Lets one
+    see all of the Vimside configurable Options and their current value.
+    To be implemented will be an Editor allowing for the modification of
+    some "dynamic" Options at runtime.
+    Implementations: 1
+
+  Completions
+    OmmiCompletions using <c-x><c-o>.
+    Very Useful.
+    Implementations: 1
+
+
+Ensime Capabilities to be Supported:
+
+  Package Inspector
+    Inspect imported package, current file's package and the package
+    specified in the ensime configuration ':package'.
+
+  Type Inspector
+    Click on type and see information, Click on information and see its
+    information. Move about Inspector history.
+
+  SBT Command-Line
+    Switch to the sbt command-line (works for sbt projects only)
+
+  Scalex
+    Seems to be a dead project (see: http://scalex.org/)
+
+  Refactoring
+    Rename the symbol at point.
+    Organize imports.
+    Extract local.
+    Extract method.
+    Inline local.
+    Add import for type at point.
+
+  Building
+    Build the entire project.
+    Rebuild the project incrementally.
+
+  Run Application
+
+  Debug Application
+    Start and run the debugger.
+    Start and run the debugger.
+    Set a breakpoint.
+    Clear a breakpoint.
+    Step.
+    Step over.
+    Step out.
+    Continue from a breakpoint.
+    Kill the debug session.
+    Inspect the local variable at cursor.
+    Show backtrace.
+
+  And others
+
+
