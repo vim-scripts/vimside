@@ -1,0 +1,1482 @@
+*vimside.txt*        For Vim version 7.3              Last change: 2012
+
+Author:      Richard Emberson 
+Version:     0.2.8
+Title:       Vimside: Vim Scala IDE
+Homepage:    TODO
+
+For Vim instructions on installing this 'txt' file, enter:
+    :help add-local-help
+
+==============================================================================
+0. Contents                                       *vimside* *vimside-contents*
+
+  0. Content                                     |vimside-contents|
+  1. Introduction                                |vimside-intro|
+  2. Installation                                |vimside-install|
+    2.1 Download                                   |vimside-download|
+    2.2 Dependency                                 |vimside-dependency|
+      2.2.1 Mandatory 
+      2.2.1 Optional 
+    2.3 Ensime                                     |vimside-ensime|
+    2.4 Directory layout                           |vimside-directory-layout|
+    2.5 Plugin Managers                            |vimside-plugin-managers|
+    2.5.1 VAM                                      |vimside-vam|
+    2.5.2 Pathogen                                 |vimside-pathogen|
+  3. Test Configure                              |vimside-test-configure|
+  4. Running                                     |vimside-running|
+    4.1 Project Config
+    4.2 Start and Stop
+  5. Options                                     |vimside-options|
+    5.1 Dynamic vs Static
+    5.2 Vimside Configuration
+    5.3 Ensime Configuration
+    5.4 Swank Caller, Handler and Event
+    5.5 Forms
+    5.6 Implementation to Use
+    5.7 Command Tailoring
+  6. Key Mappings                                |vimside-mappings|
+    6.1 Default
+    6.2 User-Defined
+  7. Features                                    |vimside-features|
+    7.1 Current Supported Ensime Commands:
+      7.1.1 Start Ensime
+      7.1.2 Stop Ensime
+      7.1.3 Map <Tab> to Omni-Code Completion
+      7.1.4 Symbol At Point
+      7.1.5 Selection Expand/Contract
+      7.1.6 Global Public Search
+      7.1.7 Open Browser Info
+      7.1.8 Hover To Symbol
+      7.1.9 Use of Symbol At Point
+      7.1.10 Launch Repl
+      7.1.11 Typecheck Current File
+      7.1.12 Typecheck All Files
+      7.1.13 Re-Show Errors/Warnings
+      7.1.14 Format Source
+      7.1.15 Popup Menu
+      7.1.16 Browse Source Roots
+      7.1.17 Browse Reference Source Roots
+      7.1.18 Option Viewer/Editor
+      7.1.19 Completions
+    7.2 Ensime Capabilities to be Supported:
+      7.2.1 Package Inspector
+      7.2.2 Type Inspector
+      7.2.3 SBT Command-Line
+      7.2.4 Scalex
+      7.2.5 Refactoring
+      7.2.6 Building
+      7.2.7 Run Application
+      7.2.8 Debug Application
+      7.2.9 And others
+
+  8. Architecture                                |vimside-architecture|
+    8.1 Client and Server
+    8.2 Polling, Jobs and Scheduler
+    8.3 Swank Protocol
+    8.4 RPC
+    8.5 Events
+    8.6 Options
+    8.7 Implementations
+  9. FAQ                                         |vimside-faq|
+    9.1 User                                   |vimside-faq-user|
+    9.2 Developer                              |vimside-faq-developer|
+  10. Release notes                              |vimside-release-notes|
+  11. Todo List                                  |vimside-todo|
+  12. Questions                                  |vimside-questions|
+
+==============================================================================
+1. Introduction                                               *vimside-intro*
+
+{Vimside} is a Vim Scala IDE. It uses Ensime as its backend compilation
+and information server. As such, it shares capabilities with Ensime's
+Emacs frontend. It was inspired by Daniel Spiewak talk about his JEdit 
+binding to Ensime and by the existing Vim-Ensime python-enabled client Envim.
+Vimside does have a couple of external dependencies beyond Ensime;
+specifically, {Vimproc} and {Vimshell} and the optional {Self} and {Forms} Vim
+libraries.
+
+There are two ways to get Vimside and its dependencies onto one's 
+machine: download the zip files for all required Vim scripts or
+use a Vim plugin manager and configure it in one's '.vimrc' and it
+will automatically download and install all of the files.
+In either case, there is a little more work that needs to be done.
+Vimproc is a VimL binding to a C-language library which provides the
+socket support for Vimside to communicate with the Ensime Server.
+This C-code must be compiled using one of the Vimproc provided
+platform-specific make files. Also, Ensime, which is written in Scala,
+must either be compiled (which is something I've never done) or one
+simply downloads from the Ensime github site the pre-build library
+which for either Scala 2.9.2 or 2.10-snapshot.
+
+Prior to starting, a user must create some configuration files in order 
+to use Vimside while editing their Scala project's code. One of the files 
+is the Ensime configuration file which Vimside forwards to the Ensime 
+Server and the others are optional and are used to configure Vimside.
+
+Vimside comes with a test Java/Scale project with pre-configure
+Ensime configuration file. These are located in the directory 'data/vimside'.
+If one uses this Ensime configuration file and, in addition, creates
+a tailored options_user,vim file in the same directory, one can
+test out Vimside without having to try it on 'real' project code.
+
+The Emacs Ensime client communicates with its backend Ensime server
+using what is known as the Swank protocol. Vimside uses this same
+protocol. Vimside mirrors (only a subset for now) the commands that the 
+Emacs Ensime client supports ranging from editing, to building, to
+running and, finally, to debugging.
+
+Since, Vimside is, at its core, simply a Vim plugin, one can mix-and-match
+other Vim Scala plugins (snipmate, scale syntax highlighting, etc.) to 
+create one's own Scala IDE.
+
+==============================================================================
+2. Installation                                               *vimside-install*
+
+There are two basic ways to install Vimside. One is to download the Vimside
+code and its dependencies by hand and unzip them in their proper places.
+The second approach is to use a Vim plugin manager. 
+In either case, for a couple of Vimside's dependencies additional steps,
+outlined below, are needed.
+
+2.1 Download                                                 *vimside-download*
+
+To get the Vimside zip file from vim.org go to
+http://www.vim.org/scripts/script.php?script_id=4298
+and download the latest version. Unzip it in your '.vim' or 'vimfiles'
+directory.
+
+For the very latest snapshots of Vimside, a zip file can be downloaded
+from: https://github.com/megaannum/vimside.
+
+2.2 Dependency                                             v*imside-dependency*
+
+Vimside has a couple of dependencies on other Vim libraries. Some dependencies
+are mandatory - Vimside will not work without them, while others are
+optional - with them Vimside has extended capabilities.
+
+2.2.1 Mandatory 
+
+Vimside depends upon Vimproc (https://github.com/Shougo/vimproc) for a 
+C-language binding to sockets (and, thus to the Ensime server).
+
+Vimshell (https://github.com/Shougo/vimshell) is needed for launching and 
+managing communications with the Scala Repl (and, very possibly, the 
+launching of the SBT command line in the future).
+
+It is recommended that you get the latest releases of these since they both 
+were modified to add some support for capabilities identified while creating 
+Vimside. Download them both and unzip them.
+
+For Vimproc, there is an additional step because it includes a C-language 
+library. You must compile the library for your machine.  Vimproc comes with 
+a number of make-files. Pick the right one and build the library. Since 
+Vimside is for Scala programmers, I expect that building a C-library with 
+a supplied makefile will not be too challenging :-)
+
+2.2.1 Optional 
+
+Vim has a Forms library, a character-base user interface 'widget' set, and
+Vimside has enhanced capabilities and flexibility if the Forms Library is 
+installed. The Forms library depends upon the Vim Self library.
+
+The latest version of these can be gotten from github or you can get 
+released versions from vim.org:
+(http://www.vim.org/scripts/script.php?script_id=4150)
+and
+(http://www.vim.org/scripts/script.php?script_id=3072)
+
+2.3 Ensime                                                     v*imside-ensime*
+
+Ensime is not a Vim plugin. It is a Scala program. It has to be installed
+and built or a pre-build version has to be used. It can be downloaded
+from:
+
+    https://github.com/aemoncannon/ensime
+
+One can the follow the instructions there and build it. 
+
+I have never done this. Rather, I have downloaded a pre-build bundle. 
+One for Scala 2.9 and another for Scala 10.0. These can be found at:
+
+    https://github.com/aemoncannon/ensime/downloads
+
+The Ensime build directory has the following layout using
+ensime_2.9.2-0.9.8.1 as an example:
+
+  ensime_2.9.2-0.9.8.1/
+    bin/                 
+    LICENSE
+    elisp/
+    lib/                 
+    README.md
+
+or ensime_2.10.0-SNAPSHOT-0.9.7:
+
+  ensime_2.10.0-SNAPSHOT-0.9.7/
+    bin/  
+    elisp/  
+    lib/  
+    LICENSE  
+    README.md
+
+It is important that the value of the 'vimside-scala-version'
+Option agrees with the Ensime build version. For
+ensime_2.9.2-0.9.8.1 (the default value):
+
+   call owner.Set("vimside-scala-version", "2.9.2")
+
+and for ensime_2.10.0-SNAPSHOT-0.9.7:
+
+   call owner.Set("vimside-scala-version", "2.10.0")
+
+These values can be set in 'data/vimside/options_user.vim'.
+
+In addition, the version of Java ($JAVA_HOME/bin/java -version)
+in the window  that runs Vim (or launched GVim) must agree with
+the value of the Option 'vimside-java-version'. This Option
+has the default value of '1.6' and can be set, again, in
+'data/vimside/options_user.vim':
+
+  call owner.Set("vimside-java-version", "1.6")
+
+
+Having built Ensime or downloaded a pre-built package, you must
+set an Option in Vimside so that Vimside can locate the script
+used to start the Ensime server. To set a Vimside Option, you
+must copy the 'example_options_user.vim' located in
+'data/vimside' to a file called 'options_user.vim' and
+edit it.
+
+There is two different ways to do this.
+
+The first is to set the Option 'ensime-install-path' to the
+location of downloaded Ensime source. If you use the VAM plugin manager,
+then Ensime will be in the directory:
+
+  $HOME . "/.vim/vim-addons/ensime
+or
+  $HOME .  "/vimfiles/vim-addons/ensime
+
+so you would set the Option according
+
+  call owner.Set("ensime-install-path", $HOME . "/.vim/vim-addons/ensime")
+or
+  call owner.Set("ensime-install-path", $HOME .  "/vimfiles/vim-addons/ensime")
+
+Then depending upon the name of the build directory, which is under the
+'ensime-install-path' Option value directory location, you would
+set the value of the Option 'ensime-dist-dir' to that directory name.
+For example:
+
+    call owner.Set("ensime-dist-dir", "ensime_2.9.2-0.9.8.1")
+or
+    call owner.Set("ensime-dist-dir", "ensime_2.10.0-SNAPSHOT-0.9.7")
+
+Alternatively, you can specify the full path to the ensime distribution
+using the Option 'ensime-dist-path'. As an example, if you installed
+an Ensime build package in some Scala directory, you might set
+the Option as:
+
+    call owner.Set("ensime-dist-path", $HOME .  "/scala/ensime/ensime_2.9.2-0.9.8.1")
+
+If you set the 'ensime-dist-path', it is checked first and if it exists it
+is used rather than the 'ensime-install-path' and 'ensime-dist-dir' combination.
+
+
+2.4 Directory layout                                 *vimside-directory-layout*
+
+After unpacking the {Vimside} directory layout should look like: 
+    $HOME/.vim/
+      autoload/
+        vimside.vim
+        vimside/
+          " vimside code
+      data/
+        " data that persists between invocations of a plugin
+        vimside/
+            " examples, local test Scala/Java source tree
+      " and user options file.
+      doc/
+        vimside.txt
+      plugin/
+        vimside.vim
+
+The Vim libraries Vimside depends upon will also be installed under
+the standard Vim directories.
+
+If you are using the VAM plugin manager, then, of course, the Vimside
+code will be under '$HOME/.vim/vim-addons/vimside'. And, the libraries
+that Vimside depends upon, if they too are being managed with VAM, they
+will also be loacated under the 'vim-addons' directory.
+
+2.5 Plugin Managers                                   *vimside-plugin-managers*
+
+Vim plugin managers make installing and, even more important, managing 
+plugin upgrade easy. Well, I think so.
+
+2.5.1 VAM                                                         *vimside-vam*
+
+For more information about vim-addon-manager, see [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager) and [Vim-addon-manager getting started](https://github.com/MarcWeber/vim-addon-manager/blob/master/doc/vim-addon-manager-getting-started.txt)
+
+In your .vimrc, add self as shown below:
+
+    fun SetupVAM()
+
+      ...
+
+      let g:vim_addon_manager = {}
+      let g:vim_addon_manager.plugin_sources = {}
+
+      ....
+
+      let g:vim_addon_manager.plugin_sources['self'] = {'type': 'git', 'url': 'git://github.com/megaannum/self'}
+      let g:vim_addon_manager.plugin_sources['forms'] = {'type': 'git', 'url': 'git://github.com/megaannum/forms'}
+      let g:vim_addon_manager.plugin_sources['vimproc'] = {'type': 'git', 'url': 'git://github.com/Shougo/vimproc'}
+      let g:vim_addon_manager.plugin_sources['vimshell'] = {'type': 'git', 'url': 'git://github.com/Shougo/vimshell'}
+      let g:vim_addon_manager.plugin_sources['ensime'] = {"type": "git", "url": "git://github.com/aemoncannon/ensime", "branch" : "scala-2.9"}
+      let g:vim_addon_manager.plugin_sources['vimside'] = {'type': 'git', 'url': 'git://github.com/megaannum/vimside'}
+
+
+      let plugins = [
+        \ 'self',
+        \ 'forms',
+        \ 'vimproc',
+        \ 'vimshell',
+        \ 'ensime',
+        \ 'vimside'
+        \ ]
+
+      call vam#ActivateAddons(plugins,{'auto_install' : 0})
+
+      ...
+
+    endf
+    call SetupVAM()
+
+Note that to use Vimside, the 'self' and 'forms' libraries above are optional. 
+With the 'forms' library, Vimside supports additional features such as a 
+popup-menu of commands and the type and package inspectors (not yet 
+implemented).
+
+Also, when one downloads Vimproc, you MUST go into the vimproc directory 
+and build the C-language file 'proc.c' using one of the supplied make files.
+
+Now start Vim. You will be asked by vim-addon-manager if you would like 
+to download and install the plugins.
+
+2.5.2 Pathogen                                               *vimside-pathogen*
+
+I do not use pathogen. An example usage would be welcome.
+
+==============================================================================
+3. Test Configure                                      *vimside-test-configure*
+
+Out-of-the-box, just as Vimside is installed, it is possible with a couple
+of minor actions to run Vimside against a test project that is part of its
+installation code.
+
+To run against test Scala/Java project, first in 'data/vimside' 
+directory copy example_options_user.vim to options_user.vim.
+
+  > cd $HOME/.vim/data/vimside
+  > /bin/cp example_options_user.vim options_user.vim
+
+Then, in options_user.vim uncomment the following two lines:
+
+   call a:option.Set("test-ensime-file-use", 1)
+   call a:option.Set("ensime-config-file-name", "ensime_config.vim")
+
+This tells Vimside to use the test project code and to use the
+ensime_config.vim as the source for Ensime Configuration.
+
+One can also run Emacs and enter the command to start Ensime. 
+I sometimes do this just to check-out how Emacs-Ensime does something
+that I am trying to implement in VimL for Vimside.
+
+The test project has both Java code and Scala code. Some of the code
+is correct, but other parts will product compile-time errors.
+
+One can test all of the Vimside commands, key mappings, against the
+test project without fearing that one might scramble code in an
+existing project.
+
+==============================================================================
+4. Running                                                    *vimside-running*
+
+4.1 Project Config
+
+There is a single file to configure Vimside Options under '.vim', 
+'data/vimside/options_user.vim'. This is sufficient if you only have
+a single project on your machine. But, if you have or plan to have more
+than one projects on your machine you might want to have project
+specific option configuration files. There are two Options that 
+control this.
+
+The first Option is: 'vimside-project-options-enabled' and if 
+true (default is false), then Vimside will look for a configuration
+file with name given by the second Option: 'vimside-project-options-file-name'.
+
+The default value of the 'vimside-project-options-file-name' Option
+is 'options_project.vim'.
+
+While in the 'options_user.vim' file, an Option value is set using
+the 'Set' function, e.g,:
+
+  call owner.Set("vimside-scala-version", "2.9.2")
+
+In the 'options_project.vim' file, the Option Update function must be used:
+
+  call owner.Update("vimside-scala-version", "2.10.0")
+
+This is because "Set" can only be called once per-Option (while, 'Update'
+can be called any number of times).
+
+So, in the 'options_user.vim' one might have:
+
+  call owner.Set("vimside-scala-version", "2.9.2")
+  call owner.Set("ensime-dist-dir", "ensime_2.9.2-0.9.8.1")
+  call owner.Set("ensime-config-file-name", "ensime_config.vim")
+
+in a project file there might be:
+
+  call owner.Update("vimside-scala-version", "2.10.0")
+  call owner.Update("ensime-dist-dir", "ensime_2.10.0-SNAPSHOT-0.9.7")
+  call owner.Update("ensime-config-file-name", "_ensime")
+
+
+
+An alternative approach is to also treat the 'data/vimside/' test code
+as also a project, in that, it has its own 'options_project.vim' file.
+To do this one must do the following:
+
+1) In the 'options_user.vim' file enable project local options files:
+
+    call owner.Set("vimside-project-options-enabled", 1)
+
+While one can also uncomment/add addition option value setting,
+if one wants all projects to share some behavior or to set some
+default behavior (which can be over-ridden on a project-by-project
+basis), but enabling the above Option is all that is need in this file.
+
+2) In the 'data/vimside' directory create a 'options_project.vim' such as:
+
+    " full path to this file
+    let s:full_path=expand('<sfile>:p')
+
+    " full path to this file's directory
+    let s:full_dir=fnamemodify(s:full_path, ':h')
+
+    function! g:VimsideOptionsProjectLoad(owner)
+      let owner = a:owner
+
+      "--------------
+      " Enable logging
+      call owner.Set("ensime-log-enabled", 1)
+      call owner.Set("vimside-log-enabled", 1)
+      "--------------
+
+      "--------------
+      " Defined Java versions: '1.5', '1.6', '1.7'
+      " Defined Scala versions: '2.9.2', '2.10.0'
+      " Minor version numbers not needed
+      " Scala version MUST match 'ensime-dist-dir' used.
+      call owner.Set("vimside-java-version", "1.6")
+      call owner.Set("vimside-scala-version", "2.9.2")
+      "--------------
+      
+      "--------------
+      " Which build version of Ensime to use. 
+      call owner.Set("ensime-dist-dir", "ensime_2.9.2-0.9.8.1")
+      "--------------
+
+      "--------------
+      " To run against ensime test project code
+      " Location of test directory
+      call owner.Set("test-ensime-file-dir", s:full_dir)
+      " Uncomment to run against demonstration test code
+      call owner.Set("test-ensime-file-use", 1)
+      " The Ensime Config information is in a file called 'ensime_config.vim'
+      call owner.Set("ensime-config-file-name", "ensime_config.vim")
+      "--------------
+
+      "--------------
+      " Vimside uses Forms library 
+      call owner.Set("forms-use", 1)
+      "--------------
+
+      "--------------
+      " Hover Options
+      call owner.Set("vimside-hover-balloon-enabled", 0)
+      call owner.Set("vimside-hover-term-balloon-enabled", 0)
+      "--------------
+    endfunction
+
+This will instruct Vimside to use the "test" source code and configuration
+files.
+
+3) In all your other projects on this machine, create their own 
+project-specific 'options_project.vim' files.
+
+This is a very flexible way of configuring Vimside.
+
+
+4.2 Start and Stop
+
+To run Vimside one simply starts Vim and then start the Ensime Server. This
+is done by executing the command:
+
+  :call vimside#command#StartEnsime()
+
+There exists a key mapping for this command:
+
+  if has("gui_running")
+    nmap <silent> <m-x> :call vimside#command#StartEnsime()<CR>
+  else
+    nmap <silent> <Leader>vs :call vimside#command#StartEnsime()<CR>
+  endif
+
+As with all of the default key mappings, they mirror the Emacs-Ensime
+key bindings.  Note that when one is using GVim, the mapping uses
+the Meta/Alt key while with Vim, '<Leader>vs' is the mapping.
+This is because, there is no reliable, straight forward way of assuring
+that everyone on all platforms can actually generate an Meta and/or Alt
+key that Vim will receive. At any rate, I could not find such a solution
+so I punted.
+
+Vim will display a couple of messages generated by the Ensime server.
+When you see the message "Indexer Ready...", then the Ensime server is
+ready to accept all commands.
+
+In the 'plugin/vimside.vim' file there is the autocmd 
+
+  augroup VIMSIDE
+    au!
+    autocmd VimLeave * call vimside#StopEnsime()
+  augroup END
+
+that will call the command to stop the Ensime server when you leave Vim
+One can also explicitly stop the Ensime server by calling:
+
+  :call vimside#StopEnsime()
+
+which has the key mapping
+
+  nmap <silent> <Leader>vS :call vimside#command#StopEnsime()<CR>
+
+There is no Emacs-Ensime key binding (that I can find) that can be
+used to stop the Ensime server from Emacs, hence no key binding to copy.
+
+Sometimes, Vim/Vimside exists without taking down the Ensime Server (its
+a background job). This generally only happens if there is some bug in
+the Vimside code. If you notice that the Ensime server is still running
+after exiting Vim, you can simply kill it.
+
+==============================================================================
+5. Options                                                    *vimside-options*
+
+Vimside has many Options, currently, close to 100. The reason for such
+a large number of Options is to allow for a flexible architecture and
+to allow the user to tailor Vimside. 
+
+Some Options will most likely rarely be modified. For other Options, as the 
+user become more familiar with Vimside, they will be modified by the user to 
+reflect the user's preferences.  Each Swank RPC Ensime method has both a Vim 
+'caller' function and a 'handler' function. The values of the functions 
+references are all defined by Options. Also, all Ensime 'notification' Event 
+handlers are also defined by Vim function references Options. Under general 
+usage, these Options will rarely be changed.
+
+On the other hand, there are Options that are used to control how
+information is displayed; in the current window, horizontally or
+vertically split the current window or in a new tab; or should Vimside
+or the Ensime server log to a file; or whether the Forms library
+should be used, etc. These are ultimately up to each user to tailor.
+
+5.1 Dynamic vs Static
+
+Options have two different kinds of scope: 'static' and 'dynamic'.
+A 'static' Option is one whose value is determined at the start of a Vimside
+session and that value is used throughout the session; it can not be changed.
+An example might be the name of the Vimside log file or one of the RPC
+'caller' or 'handler' function references. A dynamic Option is one whose
+value is requested each time it is needed, allowing a user to tailor
+Vimside as it is running. Such a 'dynamic' Option might be how to display
+some information: 'same window', 'horizontally split window', 
+vertically split window' or 'tab'; or the foreground or background color
+of a balloon.
+
+If one brings up the Option Viewer/Editor, there is a Deck with two 
+Cards, one Card displaying all of the 'static' Options and the other Card
+displaying all of the 'dynamic' Options. As an Editor, it is only the
+'dynamic' Options whose values can be change to effect the current
+Vimside session.
+
+5.2 Vimside Configuration
+
+  'vimside-java-version'
+  'vimside-scala-version'
+  'vimside-project-options-enabled'
+  'vimside-project-options-file-name'
+  'vimside-log-enabled'
+  'vimside-log-file-path'
+  'vimside-log-file-name'
+  'vimside-use-cwd-as-output-dir'
+
+5.2 Test Configuration
+
+  'test-ensime-file-use'
+  'test-ensime-file-dir'
+
+5.3 Ensime Configuration
+
+  'ensime-config-file-name'
+  'ensime-install-path'
+  'ensime-dist-dir'
+  'ensime-dist-path'
+  'ensime-port-file-path'
+  'ensime-port-file-name'
+  'ensime-host-name'
+  'ensime-port-file-max-wait'
+  'ensime-log-enabled'
+  'ensime-log-file-path'
+  'ensime-log-file-name'
+
+5.4 Swank Caller, Handler and Event
+
+  'swank-rpc-builder-add-files-handler'
+  'swank-rpc-builder-add-files-caller'
+  'swank-rpc-builder-init-handler'
+  'swank-rpc-builder-init-caller'
+  'swank-rpc-builder-remove-files-handler'
+  'swank-rpc-builder-remove-files-caller'
+  'swank-rpc-builder-update-files-handler'
+  'swank-rpc-builder-update-files-caller'
+  'swank-rpc-call-completion-handler'
+  'swank-rpc-call-completion-caller'
+  'swank-rpc-cancel-refactor-handler'
+  'swank-rpc-cancel-refactor-caller'
+  'swank-rpc-completions-handler'
+  'swank-rpc-completions-caller'
+  'swank-rpc-connection-info-handler'
+  'swank-rpc-connection-info-caller'
+  'swank-rpc-debug-active-vm-handler'
+  'swank-rpc-debug-active-vm-caller'
+  'swank-rpc-debug-attach-handler'
+  'swank-rpc-debug-attach-caller'
+  'swank-rpc-debug-backtrace-handler'
+  'swank-rpc-debug-backtrace-caller'
+  'swank-rpc-debug-clear-all-breaks-handler'
+  'swank-rpc-debug-clear-all-breaks-caller'
+  'swank-rpc-debug-clear-break-handler'
+  'swank-rpc-debug-clear-break-caller'
+  'swank-rpc-debug-continue-handler'
+  'swank-rpc-debug-continue-caller'
+  'swank-rpc-debug-list-breakpoints-handler'
+  'swank-rpc-debug-list-breakpoints-caller'
+  'swank-rpc-debug-locate-name-handler'
+  'swank-rpc-debug-locate-name-caller'
+  'swank-rpc-debug-next-handler'
+  'swank-rpc-debug-next-caller'
+  'swank-rpc-debug-run-handler'
+  'swank-rpc-debug-run-caller'
+  'swank-rpc-debug-set-break-handler'
+  'swank-rpc-debug-set-break-caller'
+  'swank-rpc-debug-set-value-handler'
+  'swank-rpc-debug-set-value-caller'
+  'swank-rpc-debug-start-handler'
+  'swank-rpc-debug-start-caller'
+  'swank-rpc-debug-step-out-handler'
+  'swank-rpc-debug-step-out-caller'
+  'swank-rpc-debug-step-handler'
+  'swank-rpc-debug-step-caller'
+  'swank-rpc-debug-stop-handler'
+  'swank-rpc-debug-stop-caller'
+  'swank-rpc-debug-to-string-handler'
+  'swank-rpc-debug-to-string-caller'
+  'swank-rpc-debug-value-handler'
+  'swank-rpc-debug-value-caller'
+  'swank-rpc-exec-refactor-handler'
+  'swank-rpc-exec-refactor-caller'
+  'swank-rpc-exec-undo-handler'
+  'swank-rpc-exec-undo-caller'
+  'swank-rpc-expand-selection-handler'
+  'swank-rpc-expand-selection-caller'
+  'swank-rpc-format-source-handler'
+  'swank-rpc-format-source-caller'
+  'swank-rpc-import-suggestions-handler'
+  'swank-rpc-import-suggestions-caller'
+  'swank-rpc-init-project-handler'
+  'swank-rpc-init-project-caller'
+  'swank-rpc-inspect-package-by-path-handler'
+  'swank-rpc-inspect-package-by-path-caller'
+  'swank-rpc-inspect-type-at-point-handler'
+  'swank-rpc-inspect-type-at-point-caller'
+  'swank-rpc-inspect-type-by-id-handler'
+  'swank-rpc-inspect-type-by-id-caller'
+  'swank-rpc-method-bytecode-handler'
+  'swank-rpc-method-bytecode-caller'
+  'swank-rpc-package-member-completion-handler'
+  'swank-rpc-package-member-completion-caller'
+  'swank-rpc-patch-source-handler'
+  'swank-rpc-patch-source-caller'
+  'swank-rpc-peek-undo-handler'
+  'swank-rpc-peek-undo-caller'
+  'swank-rpc-prepare-refactor-handler'
+  'swank-rpc-prepare-refactor-caller'
+  'swank-rpc-public-symbol-search-handler'
+  'swank-rpc-public-symbol-search-caller'
+  'swank-rpc-remove-file-handler'
+  'swank-rpc-remove-file-caller'
+  'swank-rpc-repl-config-handler'
+  'swank-rpc-repl-config-caller'
+  'swank-rpc-shutdown-server-handler'
+  'swank-rpc-shutdown-server-caller'
+  'swank-rpc-symbol-at-point-handler'
+  'swank-rpc-symbol-at-point-caller'
+  'swank-rpc-symbol-designations-handler'
+  'swank-rpc-symbol-designations-caller'
+  'swank-rpc-type-at-point-handler'
+  'swank-rpc-type-at-point-caller'
+  'swank-rpc-type-by-id-handler'
+  'swank-rpc-type-by-id-caller'
+  'swank-rpc-type-by-name_at_point-handler'
+  'swank-rpc-type-by-name_at_point-caller'
+  'swank-rpc-type-by-name-handler'
+  'swank-rpc-type-by-name-caller'
+  'swank-rpc-typecheck-all-handler'
+  'swank-rpc-typecheck-all-caller'
+  'swank-rpc-typecheck-files-handler'
+  'swank-rpc-typecheck-files-caller'
+  'swank-rpc-typecheck-file-handler'
+  'swank-rpc-typecheck-file-caller'
+  'swank-rpc-uses-of-symbol-at-point-handler'
+  'swank-rpc-uses-of-symbol-at-point-caller'
+
+  'swank-event-trigger-compiler-ready'
+  'swank-event-trigger-full-typecheck-finished'
+  'swank-event-trigger-indexer-ready'
+  'swank-event-trigger-scala-notes'
+  'swank-event-trigger-java-notes'
+  'swank-event-trigger-clear-all-scala-notes'
+  'swank-event-trigger-clear-all-java-notes'
+
+  'swank-debug-trigger-output'
+  'swank-debug-trigger-stop'
+  'swank-debug-trigger-breakpoint'
+  'swank-debug-trigger-death'
+  'swank-debug-trigger-start'
+  'swank-debug-trigger-disconnect'
+  'swank-debug-trigger-exception'
+  'swank-debug-trigger-thread-start'
+  'swank-debug-trigger-thread-death'
+
+5.5 Forms
+
+  'forms-use'
+
+5.6 Implementation to Use
+
+  'vimside-hover-balloon-enabled'
+  'vimside-hover-term-balloon-enabled'
+
+5.7 Command Tailoring
+
+  'tailor-forms-sourcebrowser-open-in-tab'
+
+  'tailor-hover-updatetime'
+  'tailor-hover-max-char-mcounter'
+  'tailor-hover-cmdline-job-time'
+  'tailor-hover-term-balloon-fg'
+  'tailor-hover-term-balloon-bg'
+  'tailor-hover-term-job-time'
+
+  'tailor-information'
+  'tailor-location-same-file'
+  'tailor-location-diff-file'
+
+  'tailor-symbol-search-close-empty-display'
+  'tailor-symbol-search-do-incremental'
+
+  'tailor-expand-selection-information'
+  'tailor-expand-selection-highlight-color-dark'
+  'taior-expand-selection-highlight-color-light'
+
+  'tailor-symbol-at-point-information'
+  'tailor-symbol-at-point-location-same-file'
+  'tailor-symbol-at-point-location-diff-file'
+
+  'tailor-repl-config-location'
+
+  'tailor-uses-of-symbol-at-point-location'
+
+  'tailor-browser-keys-platform'
+  'tailor-browser-unix-commands'
+  'tailor-browser-unix-url-funcname'
+  'tailor-browser-cygwin-commands'
+  'tailor-browser-cygwin-url-funcname'
+  'tailor-browser-mswin-commands'
+  'tailor-browser-mswin-url-funcname'
+  'tailor-browser-macunix-commands'
+  'tailor-browser-macunix-url-funcname'
+
+  'tailor-show-doc-keys'
+  'tailor-show-doc-java1.5-url-base'
+  'tailor-show-doc-java1.6-url-base'
+  'tailor-show-doc-java1.7-url-base'
+  'tailor-show-doc-java-regex'
+  'tailor-show-doc-java-func-ref'
+  'tailor-show-doc-scala2.9.2-url-base'
+  'tailor-show-doc-scala2.10.0-url-base'
+  'tailor-show-doc-scala-regex', '^scala.
+  'tailor-show-doc-scala-func-ref'
+  'tailor-show-doc-scala-compiler2.10.0-url-base'
+  'tailor-show-doc-scala-compiler-regex'
+  'tailor-show-doc-scala-compiler-func-ref'
+  'tailor-show-doc-scala-reflect2.10.0-url-base'
+  'tailor-show-doc-scala-reflect-regex'
+  'tailor-show-doc-scala-reflect-func-ref'
+  'tailor-show-doc-android-url-base'
+  'tailor-show-doc-android-regex'
+  'tailor-show-doc-android-func-ref'
+
+5.7 Scheduler
+
+  'scheduler-rpc-expecting-read-timeout'
+  'scheduler-rpc-expecting-updatetime'
+  'scheduler-rpc-expecting-char-count'
+  'scheduler-rpc-not-expecting-read-timeout'
+  'scheduler-rpc-not-expecting-updatetime'
+  'scheduler-rpc-not-expecting-char-count'
+  'scheduler-event-expecting-one-updatetime'
+  'scheduler-event-expecting-one-char-count'
+  'scheduler-event-expecting-many-updatetime'
+  'scheduler-event-expecting-many-char-count'
+
+
+==============================================================================
+6. Key Mappings                                              *vimside-mappings*
+
+Vimside has key mappings as short cuts for command execution. It comes
+with a set of default mappings which mirror the key bindings that Emacs-Ensime
+has. There is also the ability for a user to define their own key mappings
+and these will be loaded rather than the default ones. The default key
+mappings are in the file 'plugin/vimside.vim' and user-defined key
+mappings can be in the file 'data/vimside/plugin_user.vim'. One may
+either use one or the other but not both sets of key mappings;
+at the top of the default key mapping file, it tests to determine if
+a user key mapping file exists and, if it does, then it is sourced
+rather than sourcing the rest of the default file.
+
+6.1 Default
+
+The default key mappings located in the file 'plugin/vimside.vim'
+mirror the Emacs-Ensime key bindings. What this means is there
+is a rough correspondence between the two. For instance, 
+Emacs-Ensime uses the key binding:
+    C-c C-v . 
+to start or expand a syntacic context selection. For Vimside,
+    <Leader>v.
+is used.
+
+For global search, Emacs-Ensime uses:
+    C-c C-v v 
+while Vimside uses:
+    <Leader>vv
+
+Why do this? Well, whatever mapping is created it is arbitrary
+so I just used/morphed the Emacs-Ensime binding.
+
+This 'rule' is not followed or applicable for everything, but it
+was a starting point.
+
+6.2 User-Defined
+
+A user is free to create their own key mappings.
+To do so, a user must create a file in the 'data/vimside' directory
+with the name 'plugin_user.vim'. This file is source and used to
+define ALL key mappings if it exists.
+
+While it is expected that the 'plugin/vimside.vim' file which
+holds the default key mappings will be over written with each
+new Vimside snapshot or version, the user defined 'plugin_user.vim'
+is not over written. Thus, rather than have the default plugin
+file be used also hold user define mappings, a completely different
+file is used (which is NOT over written with each Vimside update).
+
+==============================================================================
+7. Features                                                  *vimside-features*
+
+Vimside is based upon Ensime and, as a result, at the core of Vimside
+are the capabilities of Ensime. These are reflected in the Ensime
+commands supported by Vimside. The full set of Emacs Ensime commands
+and key bindings can be found in comments in the Vimside file 
+plugin/Vimside.vim. Of those commands, those with Vim key mappings
+are also in that file and they, basically, reflect that part of Ensime
+that is currently implemented in Vimside. I mirrored the Vim key
+mappings to reflect the Emacs-Ensime key bindings but the user is free
+to define their own mappings. At the top of the Vimside plugin file
+there is code that will source a file called 'plugin_user.vim' located 
+in the Vimside 'data' directory: ../data/vimside/plugin_user.vim
+instead of the the plugin file if it exists.
+
+7.1 Current Supported Ensime Commands:
+
+The following is the list of Emacs-Ensime commands that have corresponding
+implementations in Vimside. Sometimes there is more than one implementation.
+This was done to make sure that the Vimside architecture was flexible
+enough to allow for extensions. If a command has more than one implementation,
+which implementation is executed will depend on the value of an Option.
+Some implementations use the Forms library. If the user has not include
+the Forms library as a Vim plugin, then such implementations will not
+be executed.
+
+7.1.1 Start Ensime
+
+This makes sure that the current environment and Option settings are
+correct and then launches the Ensime backend server. The Ensime server
+writes a file where it puts the socket port that its client should use.
+Vimside reads that file, gets the port number, and provides Ensime
+with configuration information.
+
+7.1.2 Stop Ensime
+
+There is also an autocmd that will kill the Ensime server when the 
+user exists Vim.
+
+7.1.3 Map <Tab> to Omni-Code Completion
+
+In insert mode, map the <Tab> character so that the Vim OmniCompletion
+code is called which, in turn, calls the Vimside/Ensime completion code.
+
+This mapping maybe overridden by the mapping is some other plugin
+(like a snipmate binding), So, if it does not seem to work for you
+list the current mappings and see what is overriding it.
+
+Very Useful.
+
+7.1.4 Symbol At Point
+
+With cursor on variable, jump to the definition of its symbol.
+One can easily jump back and forth.
+The Emacs key binding uses the Meta key. In GVim I could get this
+to work and so in GVim the key mapping mirrors the Emacs Ensime
+key binding. But, with Vim in an XTerm, I could not get the Meta/Alt
+key to be recognized (and there is NO single place where there is
+a definitive, failsafe guide for getting Meta/Alt key mappings to 
+work, so I have a different binding for Vim.
+
+Very useful.
+
+Implementations: 1
+
+7.1.5 Selection Expand/Contract
+
+Select the surrounding syntactic context and easily shrink/grow the
+selection.
+
+One implementation uses region group highlight to display the selection
+while the other implementation uses the Vim visual mode to do a
+visual selection.
+
+Implementations: 2
+
+7.1.6 Global Public Search
+
+Search for method or types through project code using space separated
+search terms.
+
+On the command line, the user enters one or more search terms. The
+results are displayed in a Vim quickfix window.
+If the user types <Esc> the search stops and nothing is displayed.
+If the user enter <CR> the search stops and the current search results
+are kept.
+
+There are two Options associated with this search. One controls whether or
+not the search and display takes place incrementally or only after the 
+user enters <CR>.  The other controls whether or not the Vim quickfix
+window is displayed if there are not search matches.
+
+Useful.
+
+Implementations: 1
+
+7.1.7 Open Browser Info
+
+With cursor over Scala/Java variable, type, etc. invoke the associated
+on-line web api documentation (if it exists).
+
+Useful.
+
+Implementations: 1
+
+7.1.8 Hover To Symbol
+
+Place cursor (or mouse) over a variable and its Symbol will be 
+displayed. 
+
+There is a default behavior that shows the information on the command
+line. Toggle 'Hover to Symbol' on and place the cursor over a variable.
+The symbol information shows up on the command line. Move the cursor
+and the information disappears.
+
+For GVim, there is also the Option to use a balloon, like a tool tip,
+and the mouse pointer to display a symbols information. The
+'vimside-hover-balloon-enabled' Option is used to enable this for GVim
+(when GVim is compiled with '+balloon_eval'). Now, it is possible to
+change the foreground and background color of the GVim balloon but 
+it is far from straight forward and platform dependent, so Vimside does
+not have (yet) an Options that support changing the characteristic of a
+balloon.
+
+If one is using Vim in an Xterm on Linux (the only platform this was 
+tested on), it is possible to juryrig a balloon/tool-tip equivalent.
+This requires having three different programs installed:
+
+  xwininfo: Get X window information. On most Linux systems running X.
+
+  xdotool: A command-line X11 automation tool for getting mouse position
+    and active window id.  Requires a download/install. On Fedora use Yum.
+
+  dzen2: General-purpose messaging and notification for X11. Used to
+  generate 'balloon'.  Requires a download/install. On Fedora use Yum.
+
+Using this approach is enabled with the Option 
+'vimside-hover-term-balloon-enabled' (and having the above executables
+installed). It is easy to control the foreground and background colors
+used in the dzen2 'balloon' so there are Options that can be used to
+control that. Fonts can also be set for dzen2, but that is not support
+(yet) in Vimside.
+
+Cute but requires frequent server polling.
+
+Implementations: 3
+
+7.1.9 Use of Symbol At Point
+
+List all references to the symbol under the cursor.
+With the cursor on a variable, invoke command and references appear in
+quickfix windoe.
+
+Very useful.
+
+Implementations: 1
+
+7.1.10 Launch Repl
+
+Switch to the Scala interpreter, with project classes in the classpath.
+There is an Option that controls if the Scala Repl appears in 
+the 'same window', a 'horizontally split window', a 'vertically split window' or
+in a new 'tab'. When the Repl is closed, the previous Vim session is
+available.
+
+TBD: cut/paste code fragments into Repl.
+
+Implementations: 1
+
+
+7.1.11 Typecheck Current File
+
+Typecheck the current file and display errors and warnings.
+Very useful.
+
+Implementations: 1
+
+7.1.12 Typecheck All Files
+
+Typecheck the all files and display errors and warnings.
+
+Very useful.
+
+7.1.13 Re-Show Errors/Warnings
+
+Show all errors and warnings in the project.
+
+Very useful.
+
+Implementations: 1
+
+Implementations: 1
+
+7.1.14 Format Source
+
+Format the current Scala source file.
+With this command, it is the Ensime server which formats the file using
+the Scalariform preferences defined in one's project's Ensime configuration
+file. The formatted file is written to disk by Ensime and Vim is set to
+autoload it.
+
+It would be interesting to make the formatter plugable, but for now its
+hard-coded.
+
+Useful.
+
+Implementations: 1
+
+7.1.15 Popup Menu
+
+Bring up Popup menu with all Vimside commands (requires Forms library).
+The Emacs-Ensime binding has just such a popup menu.
+
+Useful for folks who have not yet learned the key mappings.
+
+Implementations: 1
+
+7.1.16 Browse Source Roots
+
+Directory browser of project sources (project code base).
+In the Ensime configuration file, the key ':source-roots' is a list
+of the source root directories for a project. These are all of the
+project's files to be compiled. This browser lets one move over
+the directories and select files to be edited.
+
+There is one implementation that uses "native" Vim and another that
+used the Forms library hierarchy and node viewers.
+
+Implementations: 2
+
+7.1.17 Browse Reference Source Roots
+
+Directory browser of project reference sources (Java and Scala libraries).
+In the Ensime configuration file, the key ':reference-source-roots' is a list
+of the source root directories for a project. These are generally
+sources that correspond to library dependencies.
+This browser lets one move over the directories and select files to be viewed.
+
+There is one implementation that uses "native" Vim and another that
+used the Forms library hierarchy and node viewers.
+
+Implementations: 2
+
+7.1.18 Option Viewer/Editor
+
+Bring up the Option Viewer/Editor (requires Forms library). Lets one
+see all of the Vimside configurable Options and their current value.
+To be implemented will be an Editor allowing for the modification of
+some "dynamic" Options at runtime.
+
+Implementations: 1
+
+7.1.19 Completions
+
+OmmiCompletions using <c-x><c-o>.
+
+This uses Vim's completion mechanism.
+
+Very Useful.
+
+Implementations: 1
+
+7.2 Ensime Capabilities to be Supported:
+
+7.2.1 Package Inspector
+
+Inspect imported package, current file's package and the package
+specified in the ensime configuration ':package'.
+
+7.2.2 Type Inspector
+
+Click on type and see information, Click on information and see its 
+information. Move about Inspector history.
+
+7.2.3 SBT Command-Line
+
+Switch to the sbt command-line (works for sbt projects only)
+
+7.2.4 Scalex
+
+Seems to be a dead project (see: http://scalex.org/)
+
+7.2.5 Refactoring
+
+Rename the symbol at point.
+Organize imports.
+Extract local.
+Extract method.
+Inline local.
+Add import for type at point.
+
+7.2.6 Building
+
+Build the entire project.
+Rebuild the project incrementally.
+
+7.2.7 Run Application
+
+7.2.8 Debug Application
+
+Start and run the debugger.
+Start and run the debugger.
+Set a breakpoint.
+Clear a breakpoint.
+Step.
+Step over.
+Step out.
+Continue from a breakpoint.
+Kill the debug session.
+Inspect the local variable at cursor.
+Show backtrace.
+
+7.2.9 And others
+
+==============================================================================
+8. Architecture                                        *vimside-architecture*
+
+This is a brief overview of some of the features of the Vimside architecture.
+It differs from most Vim plugins in that it launches and then communicates
+with another process, the Ensime server via a socket.
+
+8.1 Client and Server
+
+8.2 Polling, Jobs and Scheduler
+
+Vim is single threaded. 
+
+So, how to get a response from the Ensime server
+or how to recieve an asynchronous event from the server? The solution
+used by Vimside is 'dynamic' polling of the Ensime socket; the time between 
+a poll depends upon if a response or event(s) are expected.
+
+Again, so, how can one poll anything with Vim - its single threaded
+and if you are editing a Scala file what does the polling?
+Well, there are two mechanisms both involve autocmds: CursorHold(I) and
+CursorMoved(I).
+
+The CursorHold autocmd is triggered by the user not having press a key for
+a while (the time period is the value of the 'updatetime' option).
+Vimside set the value of 'updatetime' depending upon whether or not a
+rpc response or event is expected. The that time period ends without
+a user key press, then Vimside polls to see if anything is ready to
+be read from the Ensime server socket. If something is available,
+the appropriate handler is called and, possibly, the value of the
+'updatetime' option is adjusted, Whether or not anything is available,
+for the CursorHold autocmd to be re-enabled, a key must be pressed.
+Vimside mimic such a user action by using the Vim 'feedkeys(chars)' function
+so that, again, after the 'updatetime' period, the poll command is 
+trigger again (unless the user starts typing which postpones the triggering
+of the poll command).
+
+The CursorMoved autocmd is triggered when the cursor is moved. Vimside
+does not need to poll the server everytime the cursor is moved so what
+is done is that each time CursorMoved is triggered a counter is decremented.
+When it reaches zero, it is reset (max_motion_counter) and a poll takes 
+place. The value that the counter is reset to depends upon whether a rpc 
+response or event is expected from the Ensime server; something is expected, 
+the value is small, nothing is expected and the value is large.
+
+A poll will always happen. Either one keeps typing and the CursorMoved 
+autocmd is triggered or one stops typing and the CursorHold autocmd
+happens. One or the other, eventually.
+
+Now, in reality, this is not exactly what happens. Rather than directly
+call the polling action, what happens is a time or motion trigger
+function is called and these functions check to see if there are any
+jobs registered that are ready to be executed. One such type of job is
+the polling of the Ensime server socket, but just about anything can
+be scheduled for execution. Some jobs are execute-once while other
+jobs are re-registered after each execution and only are stopped by
+an explicit de-registration.
+
+Currently, its an art rather than a science to figure out what 
+'updatetime' and max_motion_counter values to use for which expected
+commands results and event(s). There are some general ranges with
+values and on a per-command-basis a means of explicitly setting the values.
+All of these are adjustable using appropriate Options.
+
+8.3 Swank Protocol
+
+Communication between Vimside Client and the Ensime server using the Swank 
+Protocol. Vimside sends Swank encoded messages to Ensime and Ensime
+responds with an ':ok' or ':abort' response and, possibly, some events.
+
+todo: example request/response and example events
+
+8.4 RPC
+
+todo: structure of RPC Dictionary
+
+ping_data
+  global
+  allows setting with non-default range values
+data
+  per rpc
+
+  todo; vimside#swank#rpc#util#MakeRPCEnds 
+    change replace_args extra_info
+    add 'data' and 'events'
+    change handler_ok(sexp) 
+      to handler_ok(sexp, ...) " optional 'data' 
+
+rr = {
+  'events':
+  'caller':
+  'args': {
+  }
+  'handler': {
+    'ok':
+    'abort':
+  }
+  'data': {
+  }
+}
+
+8.5 Events
+
+8.6 Options
+
+8.7 Implementations
+
+==============================================================================
+9. FAQ                                                           *vimside-faq*
+
+9.1 User                                                     *vimside-faq-user*
+    Q: Why is it call 'Vimside'?
+    A: I thought about calling it 'Yasvide' but 'Vimside' is eaier to say.
+
+    Q: What if I find a bug?
+    A: Go to https://github.com/megaannum/vimside and enter an "Issue".
+       Remember to include Vim, Vimside and Scala versions, Vim or GVim,
+       possible Option settings and, if logging was enabled, maybe some 
+       of the log output if appropriate.
+
+    Q: How to exit a Vimside
+    A: Entering ':q' (or ':q!' to not save work) for each open buffer.
+
+    Q: How to exit a Form in Vimside
+    A: Entering <Esc> will exit the current form. If you were in a sub-Form
+       you will pop up the its parent Form.
+
+    Q: Why do you have in 'data/vimside' the "example" files: 
+       example_options_user.vim, example_options_project.vim
+       and example_plugin_user.vim? Why not just options_user.vim, 
+       options_project.vim and plugin_user.vim? 
+    A: Because everytime you update, the files would be over-written.
+
+    Q: When will Vimside be finished?
+    A: Certainly you know the answer, software is never finished.
+
+    Q: When will Vimside enter Alpha?
+    A: After all major features (type inspector, package inspector,
+       refactoring, build, run, and debug) have some sort of implementation
+       so that the Vimside architecture is reasonably stable.
+
+    Q: When will Vimside be feature complete (when will it be in Beta)?
+    A: If would be great if Vimside could enter Beta with a solid set of
+       unit tests. We will see.
+
+    Q: After a change a file, the "Symbol At Point" command no longer works.
+    A: Well, yea. You have to ask Vimside (Ensime) to re-compile the file
+       so that it knows 1) where everything is and 2) what everything is.
+
+9.2 Developer                                           *vimside-faq-developer*
+    Q: What if I find a bug?
+    A: Fix it and submit a patch or go to 
+       https://github.com/megaannum/vimside and enter an "Issue".
+       Remember to include Vim, Vimside and Scala versions, Vim or GVim,
+       possible Option settings and, if logging was enabled, maybe some 
+       of the log output if appropriate.
+
+    Q: How to contribute to Vimside?
+    A: 1) Give me enough $$ so that I can retire and work on Vimside
+       5 days a week (currently, I can only work on it 1 day a week) or
+       2) Fork the git project, make extensions/fixes and ask me to
+       pull them.
+
+    Q: Why no license?
+    A: Vimside is on github meaning that folks can fork-it all they want.
+       So, is some additional license needed?
+
+==============================================================================
+10. Release notes                                       *vimside-release-notes*
+0.2.8   - Fix: ~
+  Add typecheck file on write Option.
+  Some more documentation.
+0.2.7   - Fix: ~
+  Added ability to configure Vimside/Ensime on a per-project basis.
+0.2.6   - Fix: ~
+  Issue 1 fixed bug concerning ftplugin omnifunc=vimside#command#completions#Run
+  Fixed bug when completions returns no values.
+  Added Show Document Browser command
+  Added more documentation
+  Added version file/function
+  In plugin/vimside.vim Scala key mapping now with 'autocmd FileType scala' guard
+  Added remaining RPC Caller/Handler Options
+  Add vararg to all ':ok' RPC handlers for optional 'data'
+  Added 'data' to possible RPC dispatch dictionary
+  Fixed Option Viewer/Editor so that long values wrap.
+  Changed Option name from '-use-cwd-as-default-output-dir' to 'vimside-use-cwd-as-output-dir'
+  Changed Option name from 'vimside-forms-use' to 'forms-use'
+  Changed Option name from 'vimside-forms-sourcebrowser-open-in-tab' to 'tailor-forms-sourcebrowser-open-in-tab'
+  Changed Option name from 'vimside-hover-updatetime' to 'tailor-hover-updatetime'
+  Changed Option name from 'vimside-hover-max-char-mcounter' to 'tailor-hover-max-char-mcounter'
+  Changed Option name from 'vimside-hover-cmdline-job-time' to 'tailor-hover-cmdline-job-time'
+  Changed Option name from 'vimside-hover-term-balloon-fg' to 'tailor-hover-term-balloon-fg'
+  Changed Option name from 'vimside-hover-term-balloon-bg' to 'tailor-hover-term-balloon-bg'
+  Changed Option name from 'vimside-hover-term-job-time' to 'tailor-hover-term-job-time'
+  Changed Option name from 'swank-information' to 'tailor-information'
+  Changed Option name from 'swank-location-same-file' to 'tailor-information'
+  Changed Option name from 'swank-location-diff-file' to 'tailor-location-diff-file'
+  Changed Option name from 'public-symbol-search-close-empty-display' to 'tailor-symbol-search-close-empty-display'
+  Changed Option name from 'public-symbol-search-do-incremental' to 'tailor-symbol-search-do-incremental'
+  Changed Option name from 'swank-rpc-expand-selection-information' to 'tailor-expand-selection-information'
+  Changed Option name from 'swank-rpc-expand-selection-highlight-color-dark' to 'tailor-expand-selection-highlight-color-dark'
+  Changed Option name from 'swank-rpc-expand-selection-highlight-color-light' to 
+    'taior-expand-selection-highlight-color-light'
+  Changed Option name from 'swank-rpc-symbol-at-point-information' to 'tailor-symbol-at-point-information'
+  Changed Option name from 'swank-rpc-symbol-at-point-location-same-file' to 'tailor-symbol-at-point-location-same-file'
+  Changed Option name from 'swank-rpc-symbol-at-point-location-diff-file' to 'tailor-symbol-at-point-location-diff-file'
+  Changed Option name from 'swank-rpc-repl-config-location' to 'tailor-repl-config-location'
+  Changed Option name from 'swank-rpc-uses-of-symbol-at-point-location' to 'tailor-uses-of-symbol-at-point-location'
+  Changed Option name from 'swank-rpc-expecting-read-timeout' to 'scheduler-rpc-expecting-read-timeout'
+  Changed Option name from 'swank-rpc-expecting-updatetime' to 'scheduler-rpc-expecting-updatetime'
+  Changed Option name from 'swank-rpc-expecting-char-count' to 'scheduler-rpc-expecting-char-count'
+  Changed Option name from 'swank-rpc-not-expecting-read-timeout' to 'scheduler-rpc-not-expecting-read-timeout'
+  Changed Option name from 'swank-rpc-not-expecting-updatetime' to 'scheduler-rpc-not-expecting-updatetime'
+  Changed Option name from 'swank-rpc-not-expecting-char-count' to 'scheduler-rpc-not-expecting-char-count'
+  Changed Option name from 'swank-event-expecting-one-updatetime' to 'scheduler-event-expecting-one-updatetime'
+  Changed Option name from 'swank-event-expecting-one-char-count' to 'scheduler-event-expecting-one-char-count'
+  Changed Option name from 'swank-event-expecting-many-updatetime' to 'scheduler-event-expecting-many-updatetime'
+  Changed Option name from 'swank-event-expecting-many-char-count' to 'scheduler-event-expecting-many-char-count'
+0.2.5   - Fix: ~
+    Stop Ensime command no longer prints error message if Ensime was not
+    started.
+0.2.4   - Fix: ~
+    Fixed term and cmdline hover so that they respond more quickly.
+    Fixed Expand Selection 'highlight' cleared when cursor moves.
+    Added message to typecheck RPC (that it might take a moment).
+    Expanded option help in 'example_options_user.vim'
+    Single reference source root now assumed for Scala in 'ensime_config.vim'
+0.2.3   - Fix: ~
+    Made example options file 'example_options_user.vim' maybe easier to
+    understand and use.
+    Modified Option manager so that the 'ensime-dist-path' takes precedence
+    over the combination of the two Options 'ensime-install-path' and
+    'ensime-dist-dir'.
+0.2.2   - Fix: ~
+    Added documentation and example Option setting code to
+    example_options_user.vim.
+0.2.1   - Fix: ~
+    Reorganized command vim files.
+    Added doc/vimside.txt
+    Added ShowErrorsAndWarnings command.
+    Removed 'Vimside' from missing Option exception
+    Fixed sexp parser so that it could parse Ensime selection data.
+0.2.0   - Fix: ~
+    Forms Label checks that 'text' is String or Number.
+
+==============================================================================
+11. Todo List                                                    *vimside-todo*
+
+    * Implement remaining Emacs-Ensime commands.
+
+==============================================================================
+12. Questions                                               *vimside-questions*
+
+    Q: Don't seem to be able to get <S-Tab> to work with Vim-linux.
+
+    Q: Don't seem to be able to get <Meta-x> or <Alt-x>  to work 
+      with Vim-linux.
+
+==============================================================================
+
+vim:tw=78:ts=8:noet:ft=help:fo+=t:norl:noet:
