@@ -98,6 +98,17 @@ Current Supported Ensime Commands:
     Useful.
     Implementations: 1
 
+  Refactoring
+    Rename the symbol at point.
+    Organize imports.
+    Extract local.
+    Extract method.
+    Inline local.
+    Not supported yet: Add import for type at point.
+
+    Useful.
+    Implementations: 1
+
   Popup Menu
     Bring up Popup menu with all Vimside commands (requires Forms library).
     Useful for folks who have not yet learned the key mappings.
@@ -139,14 +150,6 @@ Ensime Capabilities to be Supported:
 
   Scalex
     Seems to be a dead project (see: http://scalex.org/)
-
-  Refactoring
-    Rename the symbol at point.
-    Organize imports.
-    Extract local.
-    Extract method.
-    Inline local.
-    Add import for type at point.
 
   Building
     Build the entire project.
@@ -316,7 +319,7 @@ https://github.com/aemoncannon/ensime/downloads.
 I highly recommend getting these (Scala 2.9.2 and/or 2.10.0-SNAPSHOT)
 rather than trying to build the Ensime Scala code yourself.
 
-Ensime is not a Vim plugin. It is a Scale program. It has to be installed
+Ensime is not a Vim plugin. It is a Scala program. It has to be installed
 and built or a pre-build version has to be used. It can be downloaded
 from:
 
@@ -325,7 +328,7 @@ from:
 One can the follow the instructions there and build it. 
 
 I have never done this. Rather, I have downloaded a pre-build bundle. 
-One for Scala 2.9 and another for Scala 10.0. These can be found at:
+One for Scala 2.9 and another for Scala 2.10.0. These can be found at:
 
     https://github.com/aemoncannon/ensime/downloads
 

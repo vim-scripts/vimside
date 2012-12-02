@@ -11,11 +11,10 @@ Vimside communicates with the Ensime server using Shougo vimproc
 ( git://github.com/Shougo/vimproc ),
 a very clean and elegant C-language binding to sockets (and also pipes,
 ptys, files, etc.).  Vimside also uses Shougo vimshell to launch and
-communicate with
-the Scala Repl.
+communicate with the Scala Repl.
 
 The current pre-alpha has only be run against the Ensime pre-built
-ensime_2.9.2-0.9.8.1.tar.gz and ensime_2.10.0-SNAPSHOT-0.9.7.tar.gz
+ensime_2.9.2-0.9.8.1.tar.gz and ensime_2.10.0-RC3-0.9.8.2.tar.gz
 downloads.
 
 Look at the plugin/vimside.vim file for key mappings: how to start the
@@ -120,6 +119,24 @@ Current Supported Ensime Commands:
     Useful.
     Implementations: 1
 
+  Refactoring
+    Rename the symbol at point.
+    Organize imports.
+    Extract local.
+    Extract method.
+    Inline local.
+    Add import for type at point.
+    Import suggestions
+
+    Useful.
+    Implementations: 1
+
+  Building
+    Build the entire project.
+    Rebuild the project incrementally.
+    Useful.
+    Implementations: 1
+
   Popup Menu
     Bring up Popup menu with all Vimside commands (requires Forms library).
     Useful for folks who have not yet learned the key mappings.
@@ -162,18 +179,6 @@ Ensime Capabilities to be Supported:
   Scalex
     Seems to be a dead project (see: http://scalex.org/)
 
-  Refactoring
-    Rename the symbol at point.
-    Organize imports.
-    Extract local.
-    Extract method.
-    Inline local.
-    Add import for type at point.
-
-  Building
-    Build the entire project.
-    Rebuild the project incrementally.
-
   Run Application
 
   Debug Application
@@ -190,5 +195,4 @@ Ensime Capabilities to be Supported:
     Show backtrace.
 
   And others
-
 
