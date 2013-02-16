@@ -14,7 +14,7 @@ ptys, files, etc.).  Vimside also uses Shougo vimshell to launch and
 communicate with the Scala Repl.
 
 The current pre-alpha has only be run against the Ensime pre-built
-ensime_2.9.2-0.9.8.1.tar.gz and ensime_2.10.0-RC3-0.9.8.2.tar.gz
+ensime_2.9.2-0.9.8.1.tar.gz and ensime_2.10.0-0.9.8.5.tar.gz
 downloads.
 
 Look at the plugin/vimside.vim file for key mappings: how to start the
@@ -94,6 +94,10 @@ Current Supported Ensime Commands:
     Very useful.
     Implementations: 1
 
+  SBT Command-Line
+    Switch to the sbt command-line (works for sbt projects only)
+    Implementations: 2
+
   Launch Repl
     Switch to the Scala interpreter, with project classes in the classpath.
     TBD: cut/paste code fragments into Repl.
@@ -172,9 +176,6 @@ Ensime Capabilities to be Supported:
   Type Inspector
     Click on type and see information, Click on information and see its
     information. Move about Inspector history.
-
-  SBT Command-Line
-    Switch to the sbt command-line (works for sbt projects only)
 
   Scalex
     Seems to be a dead project (see: http://scalex.org/)

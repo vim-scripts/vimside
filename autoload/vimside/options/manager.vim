@@ -321,7 +321,7 @@ function! vimside#options#manager#LoadProject(errors)
           let dir = fnamemodify(dir, ":h")
         endwhile
 
-        if dir != '/' && g:VimsideCheckDirectoryExists(dir, "r-x", l:errors)
+        if dir != '/' && dir != l:vimside_dir && g:VimsideCheckDirectoryExists(dir, "r-x", l:errors)
           let l:option_file = dir . "/" . l:file_name
           execute ":source " . l:option_file
           call g:VimsideOptionsProjectLoad(g:vimside.options.user)
@@ -601,7 +601,7 @@ function! vimside#options#manager#Load()
 
   " Log for output of Vimside
   if g:vimside.HasOption("vimside-log-file-path")
-    let [found, s:lfilepath] = g:vimside.GetOption('vimside-log_file-path')
+    let [found, s:lfilepath] = g:vimside.GetOption('vimside-log-file-path')
     if ! found
       call add(l:errors, "Option not found: 'vimside-log-file-path'")
     endif
