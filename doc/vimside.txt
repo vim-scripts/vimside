@@ -1,7 +1,7 @@
 *vimside.txt*        For Vim version 7.3              Last change: 2012
 
 Author:      Richard Emberson 
-Version:     0.2.17
+Version:     0.2.21
 Title:       Vimside: Vim Scala IDE
 Homepage:    TODO
 
@@ -62,9 +62,9 @@ For Vim instructions on installing this 'txt' file, enter:
       7.1.20 Browse Reference Source Roots
       7.1.21 Option Viewer/Editor
       7.1.22 Completions
+      7.1.23 Package Inspector
+      7.1.24 Type Inspector
     7.2 Ensime Capabilities to be Supported:
-      7.2.1 Package Inspector
-      7.2.2 Type Inspector
       7.2.3 Scalex
       7.2.4 Run Application
       7.2.5 Debug Application
@@ -165,8 +165,7 @@ Vimside depends upon Vimproc (https://github.com/Shougo/vimproc) for a
 C-language binding to sockets (and, thus to the Ensime server).
 
 Vimshell (https://github.com/Shougo/vimshell) is needed for launching and 
-managing communications with the Scala Repl (and, very possibly, the 
-launching of the SBT command line in the future).
+managing communications with the Scala Repl the SBT.
 
 It is recommended that you get the latest releases of these since they both 
 were modified to add some support for capabilities identified while creating 
@@ -1220,19 +1219,44 @@ This uses Vim's completion mechanism.
 
 Very Useful.
 
-Implementations: 1
-
-7.2 Ensime Capabilities to be Supported:
-
-7.2.1 Package Inspector
+7.1.23 Package Inspector
 
 Inspect imported package, current file's package and the package
 specified in the ensime configuration ':package'.
+Inspector key mappings:
+In inspector pressing <F1> gets help.
+<Leader> q      : quit
+<Leader> <CR>   : inspect type at point
+<Leader> <TAB>  : next type
+<Leader> <C-n>  : next type
+<Leader> <S-TAB>: previous type  (S-TAB may not work)
+<Leader> <C-p>  : previous type
+<Leader> n      : next history
+<Leader> p      : previous history
 
-7.2.2 Type Inspector
+Very Useful.
+
+7.1.24 Type Inspector
 
 Click on type and see information, Click on information and see its 
-information. Move about Inspector history.
+information. 
+Inspector key mappings:
+In inspector pressing <F1> gets help.
+<Leader> q      : quit
+<Leader> <CR>   : inspect type at point
+<Leader> <TAB>  : next type
+<Leader> <C-n>  : next type
+<Leader> <S-TAB>: previous type  (S-TAB may not work)
+<Leader> <C-p>  : previous type
+<Leader> n      : next history
+<Leader> p      : previous history
+
+Very Useful.
+
+
+Implementations: 1
+
+7.2 Ensime Capabilities to be Supported:
 
 7.2.3 Scalex
 
@@ -1543,6 +1567,21 @@ rr = {
 
 ==============================================================================
 11. Release notes                                       *vimside-release-notes*
+0.2.21   - Fix: ~
+  Fixed history so doing previous and then adding removes deeper history.
+  Cleaned up keymapping code.
+  Cleaned up project package code.
+  Tried to cleaned up the syntax highlighting code. Someone with more
+    Vim knowledge will have to look at it.
+0.2.20   - Fix: ~
+  Inspecting the project package now works. Also, re-arranged the
+    package names. And trimmed the '.' at end of a package path.
+0.2.19   - Fix: ~
+  Added initial checkin of type and package inspecter code. Its
+    sure to have bugs. Don't know if the project package inspector
+    code works or not.
+0.2.18   - Fix: ~
+  Added a note about the ENSIME-sbt-cmd plugin and how to use it.
 0.2.17   - Fix: ~
   Added a second implementation of the interaction of Vimside and the SBT.
   Added 'tailor-sbt-config-location' Option

@@ -1,10 +1,27 @@
 This is a mirror of http://www.vim.org/scripts/script.php?script_id=4298
 
-This is the pre-alpha release of Vimside (Vim Scala IDE).  Vimside is
+This is the alpha release of Vimside (Vim Scala IDE).  Vimside is 
 built upon the ENSIME server: github: https://github.com/aemoncannon/ensime
-manual: http://aemoncannon.github.com/ensime/index.html
+manual: http://aemoncannon.github.com/ensime/index.html 
 
-I expect to continue to update the sources on github frequently, flushing
+Two outstanding Ensime features to be implemented are more
+regression tests and debugging.
+
+With this release, variable at bottom of the plugin/vimside.vim file
+have been added which allows one to turn on logging during Vimside Option
+loading. For the Vimside logger, Options must first be loaded 
+in order to configure it. Thus, no logging when loading Options.
+So, I added a non-configurable logger that only logs in the
+vimside#options#manager.vim file. Hopefully, this will help
+users figure out whats happening during option loading.
+
+Also, the example project code has been moved under the directory
+data/vimside/projects - since there are now two example projects
+and will be a couple more in the future. Additionally, the tests
+have been moved under data/vimside/tests. I will be adding more
+unit/regression tests in the future.
+
+I expect to continue to update the sources on github frequently, flushing 
 out the features.  https://github.com/megaannum/vimside
 
 Vimside communicates with the Ensime server using Shougo vimproc
@@ -14,7 +31,7 @@ ptys, files, etc.).  Vimside also uses Shougo vimshell to launch and
 communicate with the Scala Repl.
 
 The current pre-alpha has only be run against the Ensime pre-built
-ensime_2.9.2-0.9.8.1.tar.gz and ensime_2.10.0-0.9.8.5.tar.gz
+ensime_2.9.2-0.9.8.9.tar.gz and ensime_2.10.0-0.9.8.9.tar.gz
 downloads.
 
 Look at the plugin/vimside.vim file for key mappings: how to start the
@@ -166,16 +183,19 @@ Current Supported Ensime Commands:
     Very Useful.
     Implementations: 1
 
-
-Ensime Capabilities to be Supported:
-
   Package Inspector
     Inspect imported package, current file's package and the package
     specified in the ensime configuration ':package'.
+    Very Useful.
+    Implementations: 1
 
   Type Inspector
     Click on type and see information, Click on information and see its
     information. Move about Inspector history.
+    Very Useful.
+    Implementations: 1
+
+Ensime Capabilities to be Supported:
 
   Scalex
     Seems to be a dead project (see: http://scalex.org/)
@@ -196,4 +216,164 @@ Ensime Capabilities to be Supported:
     Show backtrace.
 
   And others
+
+Key Mappings
+  " Start Ensime
+  if has("gui_running")
+    <m-x>
+  else
+    <Leader>vs
+  endif
+  " Stop Vimside
+  <Leader>vS
+
+  " TAB
+  "   Start completing a method/variable.
+  <tab>
+
+  " Inspect the type of the expression under the cursor.
+  <Leader>ti
+  " Inspect package at point
+  <Leader>tp
+  " Inspect the project package if set in envime configure file.
+  <Leader>to
+
+
+  " M-. (dot)
+  "   Jump to definition of symbol under cursor.
+  "   Note that the Meta/Alt keys, while easy to use with GVim, are,
+  "   at best, an advanture and, at worst, impossible, to get working
+  "   with non-GVim - thus the mapping is different for non-gui-running.
+  if has("gui_running")
+    <m-.>
+  else
+    <Leader>m.
+  endif
+
+  " M-, (comma)
+  "   Pop back to previously visited position.
+  if has("gui_running")
+    <m-,>
+  else
+    <Leader>m,
+  endif
+
+  " Select the surrounding syntactic context. Subsequent taps of '.'
+  "   and ',' will grow and shrink the selection, respectively.
+  <Leader>v.
+  <Leader>v,
+
+  " Search globally for methods or types.
+  <Leader>vv
+
+  " Scalex search for methods or types.
+  " NOT IMPLEMENTED YET
+
+  " Show (web api) documentation for symbol at point
+  <Leader>vt
+
+  " Mouse Hover
+  "   Echo the type of the expression under the cursor.
+  <Leader>vh
+
+  "   Inspect the package of the current source file.
+  " NOT IMPLEMENTED YET
+
+  " List all references to the symbol under the cursor.
+  <Leader>vr
+
+  " Switch to the sbt command-line (works for sbt projects only)
+  "     s sbt switch
+  <Leader>ss
+  " sbt do compile
+  <Leader>sc
+  " sbt do clean
+  <Leader>sn
+  " sbt do package
+  <Leader>sp
+  " sbt do exit
+  <Leader>se
+
+  " invoke the sbt command interpreter
+  <Leader>si
+
+  " Switch to the scala interpreter, with project classes in the classpath.
+  <Leader>vz
+
+  " Typecheck the current file.
+  <Leader>vc
+
+  " Typecheck all files in the project.
+  <Leader>va
+
+  " (Re-)Show all errors and warnings in the project.
+  <Leader>ve
+
+  " Format the current Scala source file.
+  <Leader>vf
+
+  " Undo a refactoring or formatting change.
+  " NOT IMPLEMENTED YET
+
+  " Go to the next compilation note in the current buffer.
+  " NOT IMPLEMENTED YET
+
+  " C-c C-d x
+  "   Where x is one of:
+  "     d Start and run the debugger.
+  "     r Start and run the debugger.
+  "     b Set a breakpoint.
+  "     u Clear a breakpoint.
+  "     s Step.
+  "     n Step over.
+  "     o Step out.
+  "     c Continue from a breakpoint.
+  "     q Kill the debug session.
+  "     i Inspect the local variable at cursor.
+  "     t Show backtrace.
+  "     a Clear all breakes
+  " NOT IMPLEMENTED YET
+
+  "   Where x is one of:
+  "     r Rename the symbol at point.
+  <Leader>rr
+  "     o Organize imports.
+  <Leader>ro
+  "     l Extract local.
+  <Leader>rl
+  "     m Extract method.
+  <Leader>rm
+  "     i Inline local.
+  <Leader>ri
+  "     t Add import for type at point.
+  <Leader>rt
+
+  " Import suggestions
+  <Leader>vi
+
+  "   Where x is one of:
+  "     b Build the entire project.
+  "     r Rebuild the project, incrementally.
+  <Leader>vbb
+  <Leader>vbr
+
+  " Reload the .ensime file and recompile the project. Useful if you hit
+  "   a server bug.
+  " NOT IMPLEMENTED YET
+
+  " Start the automatic configuration file generator.
+  " NOT IMPLEMENTED YET
+
+  " Make PopUp
+  <Leader>vp
+
+  " browse source roots
+  <Leader>vBs
+  " browse referenct source roots
+  <Leader>vBr
+
+  " option editor
+  <Leader>voe
+
+
 

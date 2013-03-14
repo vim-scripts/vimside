@@ -11,11 +11,37 @@ Only a small number of all of the ENSIME capabilities have
 been implemented and it has only been tested against the
 very small Scala/Java test source project bundled with it.
 
-There is now included initial support for SBT (simple build tool).
+With lastest checkin, there is the first cut of the Type and 
+Package Inspector. There will certainly be bugs. 
+For types, place cursor over type and enter \<Leader>ti.
+For package, place cursor over package path and enter \<Leader>tp.
+Do not know if the project package inspector works yet.
+
+Inspector keymaps:
+
+    <Leader>ti   inspect type (cursor over type)
+    <Leader>tp   inspect package (cursor over package path at top of file)
+    <Leader>to   inspect project package 
+
+Inspector control:
+
+    In inspector pressing <F1> gets help.
+    <Leader> q      : quit
+    <Leader> <CR>   : inspect type at point
+    <Leader> <TAB>  : next type
+    <Leader> <C-n>  : next type
+    <Leader> <S-TAB>: previous type  (S-TAB may not work)
+    <Leader> <C-p>  : previous type
+    <Leader> n      : next history
+    <Leader> p      : previous history
+
+Entering and leaving Type Inspector multiple times has not been
+tested very much.
+
+There is now included support for SBT (simple build tool).
 The test project is in the data/tests/sbt directory. The
 plugin/vimside.vim file has key mappings for functions that
 start, compile, clean, package and exit from the SBT.
-More support will be added in future weeks (Sun Feb 10 2013).
 
 I have checked the source into github primarily so that
 the source is somewhere other than on my local machines.
@@ -25,9 +51,9 @@ frequently, flushing out the features.
 ###Current Supported Ensime Commands:
 |feature|description|implementations|
 |-------|-----------|---|
-|Start Ensime|makes sure that the current environment and Option settings are correct and then launches the Ensime backend server. The Ensime server writes a file where it puts the socket port that its client should use. Vimside reads that file, gets the port number, and provides Ensime with configuration information.||
-|Stop Ensime|There is also an autocmd that will kill the Ensime server when the user exists Vim.||
-|Map `<Tab>` to Omni-Code Completion in insert mode|This mapping maybe overridden by the mapping is some other plugin (like a snipmate binding), So, if it does not seem to work for you list the current mappings and see what is overriding it. Very Useful.||
+|Start Ensime|makes sure that the current environment and Option settings are correct and then launches the Ensime backend server. The Ensime server writes a file where it puts the socket port that its client should use. Vimside reads that file, gets the port number, and provides Ensime with configuration information.|1|
+|Stop Ensime|There is also an autocmd that will kill the Ensime server when the user exists Vim.|1|
+|Map `<Tab>` to Omni-Code Completion in insert mode|This mapping maybe overridden by the mapping is some other plugin (like a snipmate binding), So, if it does not seem to work for you list the current mappings and see what is overriding it. Very Useful.|1|
 |Symbol At Point|With cursor on variable, jump to the definition of its symbol. One can easily jump back and forth. The Emacs key binding uses the Meta key. In GVim I could get this to work and so in GVim the key mapping mirrors the Emacs Ensime key binding. But, with Vim in an XTerm, I could not get the Meta/Alt key to be recognized (and there is NO single place where there is a definitive, failsafe guide for getting Meta/Alt key mappings to work, so I have a different binding for Vim. Very useful.|1|
 |Selection Expand/Contract|Select the surrounding syntactic context and easily shrink/grow the selection.|2|
 |Global Public Search|Search for method or types through project code using space separated search terms. Useful.|1|
@@ -47,12 +73,12 @@ frequently, flushing out the features.
 |Browse Reference Source Roots|Directory browser of project reference sources (Java and Scala libraries).|2|
 |Option Viewer/Editor|Bring up the Option Viewer/Editor (requires Forms library). Lets one see all of the Vimside configurable Options and their current value. To be implemented will be an Editor allowing for the modification of some "dynamic" Options at runtime.|1|
 |Completions|OmmiCompletions using `<c-x><c-o>`.Very Useful.|1|
+|Package Inspector|Inspect imported package, current file's package and the package specified in the ensime configuration `:package`. Very Useful|1|
+|Type Inspector|Click on type and see information, Click on information and see its information. Move about Inspector history. In Inspector help <F1>. Very Useful|1|
 
 ###Ensime Capabilities to be Supported:
 |feature|description|
 |---|---|
-|Package Inspector|Inspect imported package, current file's package and the package specified in the ensime configuration `:package`.|
-|Type Inspector|Click on type and see information, Click on information and see its information. Move about Inspector history.
 |Scalex|Seems to be a dead project (see: http://scalex.org/)|
 |Run Application||
 |Debug Application|Start and run the debugger. Start and run the debugger. Set a breakpoint. Clear a breakpoint. Step. Step over. Step out. Continue from a breakpoint. Kill the debug session. Inspect the local variable at cursor. Show backtrace.|
@@ -240,7 +266,7 @@ Also you'll need to run `make` in vimproc directory.
 ###[Manual](http://aemoncannon.github.com/ensime/index.html/)
 
 In addition, for ENSIME, there are pre-built releases available at: https://github.com/aemoncannon/ensime/downloads.
-I highly recommend getting these (Scala 2.9.2 and/or 2.10.0-RC)
+I highly recommend getting these (Scala 2.9.2 and/or 2.10.0)
 rather than trying to build the Ensime Scala code yourself.
 
 Ensime is not a Vim plugin. It is a Scala program. It has to be installed and built or a pre-build version has to be used. It can be downloaded from: https://github.com/aemoncannon/ensime
@@ -259,9 +285,9 @@ The Ensime build directory has the following layout using
         lib/                 
         README.md
 
-or `ensime_2.10.0-RC3-0.9.8.2`:
+or `ensime_2.10.0-0.9.8.5`:
 
-    ensime_2.10.0-RC3-0.9.8.2/
+    ensime_2.10.0-0.9.8.5/
         bin/  
         elisp/  
         lib/  
@@ -272,7 +298,7 @@ It is important that the value of the `vimside-scala-version`
 Option agrees with the Ensime build version. For
 `ensime_2.9.2-0.9.8.1` (the default value):
     call owner.Set("vimside-scala-version", "2.9.2")
-and for `ensime_2.10.0-RC3-0.9.8.2`:
+and for `ensime_2.10.0-0.9.8.5`:
     call owner.Set("vimside-scala-version", "2.10.0")
 
 These values can be set in `data/vimside/options_user.vim`.
@@ -314,7 +340,7 @@ For example:
     call owner.Set("ensime-dist-dir", "ensime_2.9.2-0.9.8.1")
     
 or 
-    call owner.Set("ensime-dist-dir", "ensime_2.10.0-RC3-0.9.8.2")
+    call owner.Set("ensime-dist-dir", "ensime_2.10.0-0.9.8.5")
 
 Alternatively, you can specify the full path to the ensime distribution
 using the Option `ensime-dist-path`. As an example, if you installed
@@ -326,10 +352,24 @@ the Option as:
 If you set the `ensime-dist-path`, it is checked first and if it exists it
 is used rather than the `ensime-install-path` and `ensime-dist-dir` combination.
 
-Currently, Vimside does not support the Ensime SBT commands (yet to be
-implemented). When such support is created, there is an additional
-library, an SBT Plugin that supports integration with the ENSIME IDE:
+With SBT support, there is a SBT Plugin that supports integration with 
+the ENSIME IDE:
 https://github.com/aemoncannon/ensime-sbt-cmd
+Follow the directions there and add
+
+    addSbtPlugin("org.ensime" % "ensime-sbt-cmd" % "VERSION")
+
+to your ~/.sbt/plugins/plugins.sbt file
+Where "VERSION" it the version of Ensime supported which, as 
+the ensime-sbt-cmd README.md states, is 0.1.1. So, the above 
+should be:
+
+    addSbtPlugin("org.ensime" % "ensime-sbt-cmd" % "0.1.1")
+
+Entering "ensime generate" while running sbt does indeed
+generate a ".ensime" file. I have not tested whether or not
+that generated file can actually be used by Vimside and
+passed to the backend Ensime server.
 
 ----
 
@@ -392,7 +432,7 @@ So, in the `options_user.vim` one might have:
 in a project file there might be:
 
     call owner.Update("vimside-scala-version", "2.10.0")
-    call owner.Update("ensime-dist-dir", "ensime_2.10.0-RC3-0.9.8.2")
+    call owner.Update("ensime-dist-dir", "ensime_2.10.0-0.9.8.5")
     call owner.Update("ensime-config-file-name", "_ensime")
 
 An alternative approach is to also treat the `data/vimside/` test code

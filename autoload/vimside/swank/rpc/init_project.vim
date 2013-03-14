@@ -98,6 +98,14 @@ call s:LOG("InitProject ensime_config_file=". string(ensime_config_file))
   
   let sexp = vimside#sexp#LoadFile(ensime_config_file)
 
+  " save for other uses
+  let [ok, dic] = vimside#sexp#Convert_KeywordValueList2Dictionary(sexp)
+  if ok
+    let g:vimside.ensime.config = dic
+  else
+    echoe "Warning: bad config file"
+  endif
+
 "  let [ok, errmsgs] = vimside#ensime#config#Check(sexp)
 "  if ! ok
 "    throw "ERROR: Ensime Config: " . string(errmsgs)
