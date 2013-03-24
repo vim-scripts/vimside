@@ -25,16 +25,11 @@ function! g:VimsideOptionsProjectLoad(owner)
   
   "--------------
   " Which build version of Ensime to use. 
-  " call owner.Set("ensime-dist-dir", "ensime_2.9.2-0.9.8.1")
-  call owner.Set("ensime-dist-dir", "ensime_2.10.0-0.9.8.5")
+  " call owner.Set("ensime-dist-dir", "ensime_2.9.2-0.9.8.9")
+  call owner.Set("ensime-dist-dir", "ensime_2.10.0-0.9.8.9")
   "--------------
 
   "--------------
-  " To run against ensime test project code
-  " Location of test directory
-  call owner.Set("test-ensime-file-dir", s:full_dir)
-  " Uncomment to run against demonstration test code
-  call owner.Set("test-ensime-file-use", 1)
   " The Ensime Config information is in a file called 'ensime_config.vim'
   call owner.Set("ensime-config-file-name", "ensime_config.vim")
   "--------------

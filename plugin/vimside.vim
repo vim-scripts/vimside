@@ -235,3 +235,20 @@ else
     " autocmd VimLeave scala call vimside#StopEnsime()
   augroup END
 endif
+
+" --------------------------------------------------------------------------
+" Set the following to true (1), if you want to generate log output during
+" Vimside initialization, prior to the reading and validation of
+" all of the Options. This is useful for debugging problems with
+" locating and loading the files:
+"   options_user.vim
+"   options_project.vim
+"   ensime_config.vim
+let g:Vimside_Enable_Pre_Initialization_Logging = 0
+
+" Directory for the pre-init logging
+let g:Vimside_Enable_Pre_Initialization_Logging_Dir = getcwd()
+
+" Filename for the pre-init logging
+let g:Vimside_Enable_Pre_Initialization_Logging_File = 'VIMSIDE_EARLY_LOG'
+" --------------------------------------------------------------------------

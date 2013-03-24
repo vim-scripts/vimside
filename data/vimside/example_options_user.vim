@@ -1,8 +1,11 @@
 " ============================================================================
 " This file, example_options_user.vim will NOT be read by the Vimside 
 " code. 
-" To adjust option values, copy this file to 'options_user.vim' and 
-" then make changes.
+" To adjust option values, copy this file to a file called 'options_user.vim' 
+"   in the same dirctory (or into a directory "data/vimside/" in the
+"   runtime-path (see :runtimepath),
+"   and then make changes. A file with this name will only be sourced once
+"   even if it appears in multiple location, local directory and runtime path.
 " ============================================================================
 
 " full path to this file
@@ -49,8 +52,8 @@ function! g:VimsideOptionsUserLoad(owner)
 
   " Which build version of Ensime to use. 
   " Must be directory under 'ensime-install-path' directory
-  " call owner.Set("ensime-dist-dir", "ensime_2.9.2-0.9.8.1")
-  " call owner.Set("ensime-dist-dir", "ensime_2.10.0-RC3-0.9.8.2")
+  " call owner.Set("ensime-dist-dir", "ensime_2.9.2-0.9.8.9")
+  " call owner.Set("ensime-dist-dir", "ensime_2.10.0-0.9.8.9")
 
   " Or, full path to Ensime build version
   " call owner.Set("ensime-dist-path", "SOME_PATH_TO_ENSIME_BUILD_DIR")
@@ -58,11 +61,6 @@ function! g:VimsideOptionsUserLoad(owner)
 
 
   "--------------
-  " To run against ensime test project code
-  " Location of test directory
-  " call owner.Set("test-ensime-file-dir", s:full_dir)
-  " Uncomment to run against demonstration test code
-  " call owner.Set("test-ensime-file-use", 1)
   " The Ensime Config information is in a file called 'ensime_config.vim'
   " call owner.Set("ensime-config-file-name", "ensime_config.vim")
   "--------------

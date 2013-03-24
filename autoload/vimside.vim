@@ -139,6 +139,27 @@ endfunction
 let g:vimside.IndexerReady = function('g:IndexerReady')
 
 
+" return [ok, sexp, dic]
+function! vimside#EnsimeConfigLoad(filename)
+  let sexp = vimside#sexp#LoadFile(a:filename)
+
+  let [ok, dic] = vimside#sexp#Convert_KeywordValueList2Dictionary(sexp)
+  if ! ok
+    echoe "Warning: bad config file: ". a:filename
+    return [0, sexp, dic]
+  endif
+
+  if type(dic) != type({})
+    echoe "Warning: bad config file: ". a:filename . " content"
+    return [0, sexp, dic]
+  endif
+
+  if ! has_key(dic, ":root-dir")
+    let dic[":root-dir"] = fnamemodify(a:filename, ":p:h")
+  endif
+  let g:vimside.ensime.config = dic
+  return [1, sexp, dic]
+endfunction
 
 function! vimside#PreStart()
   if ! g:vimside.pre_started 

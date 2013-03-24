@@ -20,7 +20,9 @@
 " default location of Ensime files/directories
 function! vimside#options#default#Load(owner)
   let owner = a:owner
+if 0 " XXXX
   call owner.Set("test-ensime-file-use", 0)
+endif "0 XXXX
 
   " TODO remove
   " if  has("win32") || has("win95") || has("win64") || has("win16") || has("dos32")
@@ -42,7 +44,7 @@ function! vimside#options#default#Load(owner)
   call owner.Set("vimside-use-cwd-as-output-dir", 0)
 
   " call owner.Set("ensime-dist-dir", "dist_2.9.2")
-  call owner.Set("ensime-dist-dir", "ensime_2.9.2-0.9.8.1")
+  call owner.Set("ensime-dist-dir", "ensime_2.9.2-0.9.8.9")
   
   call owner.Set("ensime-log-enabled", 0)
   call owner.Set("ensime-log-file-name", "ENSIME_LOG")
@@ -54,7 +56,7 @@ function! vimside#options#default#Load(owner)
   call owner.Set("vimside-java-version", "1.6")
   call owner.Set("vimside-scala-version", "2.9.2")
 
-  call owner.Set("vimside-project-options-enabled", 0)
+  call owner.Set("vimside-project-options-enabled", 1)
   call owner.Set("vimside-project-options-file-name", "options_project.vim")
 
   call owner.Set("vimside-log-enabled", 0)
@@ -69,12 +71,12 @@ function! vimside#options#default#Load(owner)
   call owner.Set('scheduler-not-expecting-anything-update-time', 10000)
   call owner.Set('scheduler-not-expecting-anything-char-count', 100)
   call owner.Set('scheduler-expecting-rpc-response-read-time-out', 200)
-  call owner.Set('scheduler-expecting-rpc-response-update-time', 100)
-  call owner.Set('scheduler-expecting-rpc-response-char-count', 10)
-  call owner.Set('scheduler-expecting-events-read-time-out', 0)
+  call owner.Set('scheduler-expecting-rpc-response-update-time', 200)
+  call owner.Set('scheduler-expecting-rpc-response-char-count', 100)
+  call owner.Set('scheduler-expecting-events-read-time-out', 50)
   call owner.Set('scheduler-expecting-events-update-time', 500)
   call owner.Set('scheduler-expecting-events-char-count', 10)
-  call owner.Set('scheduler-expecting-many-events-read-time-out', 0)
+  call owner.Set('scheduler-expecting-many-events-read-time-out', 100)
   call owner.Set('scheduler-expecting-many-events-update-time', 2000)
   call owner.Set('scheduler-expecting-many-events-char-count', 20)
   call owner.Set('scheduler-many-max-count-no-events', 50)

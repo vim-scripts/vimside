@@ -378,6 +378,7 @@ function! s:MakeOptions()
             \ 'is ignored.'
           \ ]
       \ }
+if 0 " XXXX
   let l:options['test-ensime-file-use'] = {
         \ 'name': 'test-ensime-file-use',
         \ 'type': g:OPTION_BOOLEAN_TYPE, 
@@ -393,10 +394,11 @@ function! s:MakeOptions()
         \ 'kind': g:OPTION_DIR_PATH_KIND, 
         \ 'scope': g:OPTION_STATIC_SCOPE, 
         \ 'description': [
-            \ 'The Directory of the test Ensime Config File, generally, in',
-          \  'the "data/vimside" Directory.'
+            \ 'The Directory of the test Ensime Config File. If not set then',
+          \  'value used is the "data/vimside" Directory.'
           \ ]
       \ }
+endif "0 XXXX
   let l:options['vimside-use-cwd-as-output-dir'] = {
         \ 'name': 'vimside-use-cwd-as-output-dir',
         \ 'type': g:OPTION_BOOLEAN_TYPE, 
@@ -445,8 +447,8 @@ function! s:MakeOptions()
             \ 'values, This Directory name will generally indicate which',
             \ 'Scala version Ensime was built with and possible the Ensime.',
             \ 'version. For example, ',
-            \ '  "dist_2.9.2" or "ensime_2.9.2-0.9.8.1" or',
-            \ '  "ensime_2.10.0-RC3-0.9.8.2"'
+            \ '  "dist_2.9.2" or "ensime_2.9.2-0.9.8.9" or',
+            \ '  "ensime_2.10.0-0.9.8.9"'
           \ ]
       \ }
   let l:options['ensime-dist-path'] = {

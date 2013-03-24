@@ -1,18 +1,114 @@
 "---------------------------
-" test swank protocol
+" test new parser
 "---------------------------
 
-source ../autoload/vimside/sexp.vim
+source parser.vim
 
-call vimtap#SetOutputFile('test007.tap')
-call vimtap#Plan(112)
+call vimtap#SetOutputFile('TEST.tap')
+call vimtap#Plan(129)
+
+if 0
+
+" BOOLEAN
+let in = "(t)"
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'boolean true ToWireString')
+
+let in = "(nil)"
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'boolean true ToWireString')
+
+let in = "(t nil)"
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'boolean true ToWireString')
+
+let in = "(t nil t (nil t))"
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'boolean true ToWireString')
 
 
+" INTEGER
+let in = "(7)"
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'int 7 ToWireString')
+
+let in = "(-7 42)"
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'int 7 ToWireString')
+
+let in = "((6 6 6) -7 42)"
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'int 7 ToWireString')
+
+
+" STRING
+let in = '("hi")'
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'string ("hi") ToWireString')
+
+let in = '("hi" "Bye")'
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'string ("hi") ToWireString')
+
+let in = '("hi \"Bye\" ok")'
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'string ("hi") ToWireString')
+
+let in = '("hi" ("Bye") "ok")'
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'string ("hi") ToWireString')
+
+
+" SYMBOL
+let in = '(aSymbol)'
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'SymbolAtom (aSymbol) ToWireString')
+
+let in = '(aSymbol s2 s-2:3)'
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'SymbolAtom (aSymbol) ToWireString')
+
+let in = '((aSymbol xx) s2 (s-2:3   yy))'
+let out = '((aSymbol xx) s2 (s-2:3 yy))'
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,out,'vimside#sexp#ToWireString(1)', 'SymbolAtom (aSymbol) ToWireString')
+
+
+
+" KEYWORD
+let in = "(:proc)"
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'KeywordAtom ToWireString')
+
+let in = "(:proc :ff (:aa) :One1-2:3)"
+let sexp = Parse(in)
+let s = vimside#sexp#ToWireString(sexp)
+call vimtap#Is(s,in,'vimside#sexp#ToWireString(1)', 'KeywordAtom ToWireString')
+
+
+
+" ENSIME
 let in =  "(:swank-rpc \n (swank:connection-info) 1)"
 let out = "(:swank-rpc (swank:connection-info) 1)"
-let sexp = vimside#sexp#Parse(in)
+let sexp = Parse(in)
 let s = vimside#sexp#ToWireString(sexp)
 call vimtap#Is(s,out,'vimside#sexp#ToWireString(1)', 'swank protocol ToWireString')
+
 
 let in = "(:return
           \ (:ok
@@ -20,17 +116,19 @@ let in = "(:return
           \   (:name \"ENSIMEserver\")
           \     :machine nil :features nil :version \"0.0.1\")) 1)"
 let out = '(:return (:ok (:pid nil :server-implementation (:name "ENSIMEserver") :machine nil :features nil :version "0.0.1")) 1)'
-let sexp = vimside#sexp#Parse(in)
+let sexp = Parse(in)
 let s = vimside#sexp#ToWireString(sexp)
 call vimtap#Is(s,out,'vimside#sexp#ToWireString(1)', 'swank protocol ToWireString')
+
 
 let in = '(:swank-rpc
       \ (swank:init-project
       \ (:package "org.ensime" :root-dir "/home/aemon/src/misc/ensime/")) 2)'
 let out = '(:swank-rpc (swank:init-project (:package "org.ensime" :root-dir "/home/aemon/src/misc/ensime/")) 2)'
-let sexp = vimside#sexp#Parse(in)
+let sexp = Parse(in)
 let s = vimside#sexp#ToWireString(sexp)
 call vimtap#Is(s,out,'vimside#sexp#ToWireString(1)', 'swank protocol ToWireString')
+
 
 let in = '(:return
           \ (:ok
@@ -39,26 +137,27 @@ let in = '(:return
           \     "/home/aemon/src/misc/ensime/src/main/java" 
           \     "/home/aemon/src/misc/ensime/src/test/scala"))) 2)'
 let out = '(:return (:ok (:name "ensime" :source-roots ("/home/aemon/src/misc/ensime/src/main/scala" "/home/aemon/src/misc/ensime/src/main/java" "/home/aemon/src/misc/ensime/src/test/scala"))) 2)' 
-let sexp = vimside#sexp#Parse(in)
+let sexp = Parse(in)
 let s = vimside#sexp#ToWireString(sexp)
 call vimtap#Is(s,out,'vimside#sexp#ToWireString(1)', 'swank protocol ToWireString')
 
+
 let in = '(:background-message "Initializing Analyzer. Please wait...")'
 let out = '(:background-message "Initializing Analyzer. Please wait...")'
-let sexp = vimside#sexp#Parse(in)
+let sexp = Parse(in)
 let s = vimside#sexp#ToWireString(sexp)
 call vimtap#Is(s,out,'vimside#sexp#ToWireString(1)', 'swank protocol ToWireString')
 
 let in = '(:compiler-ready t)'
 let out = '(:compiler-ready t)'
-let sexp = vimside#sexp#Parse(in)
+let sexp = Parse(in)
 let s = vimside#sexp#ToWireString(sexp)
 call vimtap#Is(s,out,'vimside#sexp#ToWireString(1)', 'swank protocol ToWireString')
 
 let in = '(:typecheck-result
               \ (:lang :scala :is-full t :notes nil))'
 let out = '(:typecheck-result (:lang :scala :is-full t :notes nil))'
-let sexp = vimside#sexp#Parse(in)
+let sexp = Parse(in)
 let s = vimside#sexp#ToWireString(sexp)
 call vimtap#Is(s,out,'vimside#sexp#ToWireString(1)', 'swank protocol ToWireString')
 
@@ -173,10 +272,43 @@ let inputs = [
 
 for input in inputs 
   let out = input
-  let sexp = vimside#sexp#Parse(in)
+  let sexp = Parse(in)
   let s = vimside#sexp#ToWireString(sexp)
   call vimtap#Is(input,out,'vimside#sexp#ToWireString(1)', 'swank protocol ToWireString')
 endfor
+
+
+let in = '(:root-dir "/home/emberson/.vim/data/vimside" :name "test" :package "com.megaannum" :version 1 :compile-jars ("/home/emberson/scala/scala-2.10.0-M7/lib/scala-library.jar" "/home/emberson/scala/scala-2.10.0-M7/lib/scala-compiler.jar" "/home/emberson/.vim/data/vimside/build/classes") :compiler-args ("-Ywarn-dead-code") :disable-index-on-startup nil :source-roots ("/home/emberson/.vim/data/vimside/src/main/java" "/home/emberson/.vim/data/vimside/src/main/scala") :reference-source-roots ("/usr/local/java/src" "/home/emberson/scala/scala-2.10.0-M7/src/library" "/home/emberson/scala/scala-2.10.0-M7/src/compiler") :target "/home/emberson/.vim/data/vimside/build/classes" :only-include-in-index ("com\\.megaannum\\.\*") :exclude-from-index ("com\\.megaannum\\.core\\.xmlconfig\\.compiler\\*"))'
+
+let sexp = Parse(in)
+let [ok, v] = vimside#sexp#Convert_KeywordValueList2Dictionary(sexp)
+
+" echo "v=" . string(v)
+
+call vimtap#Is("","",'vimside#sexp#ToWireString(1)', 'envime file ToWireString')
+
+endif " 0
+
+
+if 1
+
+let file = "LONG"
+echo "START"
+let start = reltime()
+let sexp = vimside#sexp#ParseFile(file)
+echo "END: ". reltimestr(reltime(start))
+" 64.436427
+
+
+let file = "LONG"
+echo "START"
+let start = reltime()
+let sexp = ParseFile(file)
+echo "END: ". reltimestr(reltime(start))
+"    8.403591
+"    8.294150
+
+endif " 0
 
 
 call vimtap#FlushOutput()
