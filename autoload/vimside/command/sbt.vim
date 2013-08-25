@@ -21,6 +21,24 @@ let s:sbt_compile = 'sbt_compile'
 let s:sbt_clean = 'sbt_clean'
 let s:sbt_package = 'sbt_package'
 
+let [found, longline] = g:vimside.GetOption('tailor-sbt-compile-error-long-line-quickfix')
+if found
+  let s:sbt_longline = longline
+else
+  let s:sbt_longline = 0
+endif
+let [found, read_size] = g:vimside.GetOption('tailor-sbt-error-read-size')
+if found
+  let s:sbt_read_size = read_size
+else
+  let s:sbt_read_size = 10000
+endif
+let [found, use_signs] = g:vimside.GetOption('tailor-sbt-use-signs')
+if found
+  let s:sbt_use_signs = use_signs
+else
+  let s:sbt_use_signs = 0
+endif
 
 let s:match_prompt = '^\(>\|scala>\|\[project_name\] \$\) $'
 let s:match_info = '^\[info\]\([^\n]*\)$'
@@ -33,6 +51,7 @@ let s:match_compile = '^compile$'
 let s:match_error_file = '^\[error\] \(.\+\)\.\(scala\|java\):\([0-9]\+\): \(.*\)$'
 " [error]      ^
 let s:match_error_column = '^\[error\] \( \+\)\^$'
+let s:match_error_msg = '^\[error\] \([^\n]*\)$'
 
 let s:max_counter = 0
 
@@ -131,7 +150,7 @@ if has_key(s:subproc, 'pid')
 call s:LOG("sbt: pid=" . s:subproc.pid)
 endif
 
-  call vimside#scheduler#SetUpdateTime(100)
+  call vimside#scheduler#SetUpdateTime(300)
   call vimside#scheduler#ResetAuto()
 
 call s:LOG("vimside#command#sbt#Switch: BOTTOM")
@@ -181,13 +200,18 @@ call s:LOG("vimside#command#sbt#Compile: TOP")
   let l:charcnt = 10
   let l:repeat = 1
   call vimside#scheduler#AddJob(s:sbt_compile, l:Func, l:sec, l:msec, l:charcnt, l:repeat) 
-call vimside#scheduler#SetUpdateTime(100)
+call vimside#scheduler#SetUpdateTime(300)
 " call vimside#scheduler#ResetAuto()
 
   let g:vimside.project.scala_notes = []
   let g:vimside.project.java_notes = []
+  call vimside#command#show_errors_and_warning#Close()
 
+  " closes quickfix window (if its open, otherwise nothing)
+  " cclose
+  
   call s:send("compile")
+
 call s:LOG("vimside#command#sbt#Compile: BOTTOM")
 endfunction
 
@@ -206,7 +230,7 @@ call s:LOG("vimside#command#sbt#Clean: TOP")
   let l:charcnt = 10
   let l:repeat = 1
   call vimside#scheduler#AddJob(s:sbt_clean, l:Func, l:sec, l:msec, l:charcnt, l:repeat) 
-call vimside#scheduler#SetUpdateTime(100)
+call vimside#scheduler#SetUpdateTime(300)
 
   call s:send("clean")
 call s:LOG("vimside#command#sbt#Clean: BOTTOM")
@@ -261,7 +285,7 @@ call s:LOG("vimside#command#sbt#Package: TOP")
   let l:charcnt = 10
   let l:repeat = 1
   call vimside#scheduler#AddJob(s:sbt_package, l:Func, l:sec, l:msec, l:charcnt, l:repeat) 
-call vimside#scheduler#SetUpdateTime(100)
+call vimside#scheduler#SetUpdateTime(300)
 
   call s:send("package")
 call s:LOG("vimside#command#sbt#Package: BOTTOM")
@@ -289,6 +313,8 @@ call s:LOG("s:HandleCompilePackageCB: lines=" . string(lines))
     let colnum = ""
     let msg = ""
 
+    let l:got_prompt = 0
+
     let echolines=[]
 
     for line in lines
@@ -306,8 +332,10 @@ call s:LOG("s:HandleCompilePackageCB: line=" . line)
       if status
 call s:LOG("s:HandleCompilePackageCB: tag=" . tag)
         if tag == 'prompt'
+call s:LOG("s:HandleCompilePackageCB: PROMPT")
           call vimside#scheduler#RemoveJob(a:cb_name)
 call vimside#ensime#swank#ping_info_set_not_expecting_anything()
+          let l:got_prompt = 1
         elseif tag == 'warn'
 let severity = "warn"
         elseif tag == 'error_compile'
@@ -335,6 +363,7 @@ call s:LOG("s:HandleCompilePackageCB: MATCH COLUMN: " . colnum)
                 \ 'lnum': linenum,
                 \ 'col': colnum,
                 \ 'text': severity .": ". msg,
+                \ 'kind': severity,
                 \ 'vcol': 1,
                 \ 'type': 'a',
                 \ 'nr': nr,
@@ -343,6 +372,13 @@ call s:LOG("s:HandleCompilePackageCB: MATCH COLUMN: " . colnum)
                 call add(g:vimside.project.java_notes, snote)
               else
                 call add(g:vimside.project.scala_notes, snote)
+              endif
+            else
+              if s:sbt_longline 
+                let extra_msg = matchlist(line, s:match_error_msg)
+                if ! empty(extra_msg)
+                  let msg = msg . extra_msg[1]
+                endif
               endif
             endif
           endif
@@ -359,9 +395,8 @@ call s:ERROR("s:HandleCompilePackageCB: unknown line=" . line)
 
     call s:cmdline_echo(echolines)
 
-    let entries = g:vimside.project.java_notes + g:vimside.project.scala_notes
-    if len(entries) > 0
-      call vimside#quickfix#Display(entries)
+    if l:got_prompt
+      call vimside#command#show_errors_and_warning#Run("c")
     endif
 
   endif
@@ -420,7 +455,7 @@ call s:ERROR("sbt NOT FOUND")
       let g:vimshell_split_command = 'split!'
     elseif location == 'vsplit_window'
       let g:vimshell_split_command = 'vsplit!'
-    elseif location == 'tab'
+    elseif location == 'tab_window'
       let g:vimshell_split_command = 'tabnew!'
     endif
 
@@ -450,7 +485,7 @@ function! g:SbtInvokeCallbackAction()
     quit
   elseif location == 'vsplit_window'
     quit
-  elseif location == 'tab'
+  elseif location == 'tab_window'
     quit
   endif
 
@@ -463,7 +498,7 @@ function! g:SbtInvokeCallback(context, cmdinfolist)
 
   let l:Func = function("g:SbtInvokeCallbackAction")
   let l:sec = 0
-  let l:msec = 100
+  let l:msec = 300
   let l:charcnt = 2
   let l:repeat = 0
   call vimside#scheduler#AddJob('sbt_callback', l:Func, l:sec, l:msec, l:charcnt, l:repeat)
@@ -480,7 +515,7 @@ endfunction
 "    [0, '']
 function! s:read_stdout()
   if has_key(s:subproc, 'stdout') && !s:subproc.stdout.eof
-    let output = s:subproc.stdout.read(1000, 10)
+    let output = s:subproc.stdout.read(s:sbt_read_size, 10)
 call s:LOG("sbt: read_stdout output=" . output)
     if output == ''
       return [0, '']
@@ -592,17 +627,7 @@ function! s:find_sbt_parent_project_path(path)
 endfunction
 
 function! s:GetLocation()
-  let [found, location] = g:vimside.GetOption('tailor-repl-config-location')
-  if ! found
-    call s:ERROR("Option not found 'tailor-repl-config-location'") 
-    let location = 'tab'
-  elseif location != 'same_window' 
-      \ && location != 'split_window'
-      \ && location != 'vsplit_window'
-      \ && location != 'tab'
-    call s:ERROR("Option 'tailor-repl-config-location' has bad location value '". location ."'") 
-    let location = 'tab'
-
-  endif
-  return location
+  let l:option_name = 'tailor-sbt-config-location'
+  let l:default_location = 'tab_window'
+  return vimside#util#GetLocation(l:option_name, l:default_location)
 endfunction

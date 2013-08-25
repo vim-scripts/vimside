@@ -11,8 +11,8 @@ Most of the ENSIME capabilities have been implemented and
 but it has only been tested against the
 very small Scala/Java test source project bundled with it.
 
-Two outstanding Ensime features to be implemented are more
-regression tests and debugging.
+Three outstanding Ensime features to be implemented are more
+regression tests, debugging and InSynth integeration.
 
 I added variable at bottom of the plugin/vimside.vim file
 which allows one to turn on logging during Vimside Option
@@ -28,7 +28,323 @@ and will be a couple more in the future. Additionally, the tests
 have been moved under data/vimside/tests. I will be adding more
 unit/regression tests in the future.
 
-With lastest checkin, there is the first cut of the Type and 
+## Latest checkin
+
+Now Vimside supports either initialization with the Option files
+'options_user.vim' and a project specific options file (and/) or
+with Properties file 'vimside.properties' and a project specific
+properties file. See the 'data/vimside/PROPERTIES' file for
+available Properties (or, changing '.' to '-', Options).
+Also, bumped (after a long time, the version number.
+
+Just checking in of a snapshot of work in progess: the actwin.vim
+(ActionWindow) code. 
+
+Updated "sbt" project build.sbt example file and now allow Option
+enum values to be Vim patterns (e,g., vimside-scala-version == 2.10.*).
+
+ShowErrorAndWarning (Compiling by directly invoking the Scala compiler
+or via SBT) can use ActWin (the default) and is configurable with, again, 
+a myriad of Options. The PROPERTIES file contains the new Options
+(see tailor-show-errors-and-warning-actwin-... Options).
+
+UsesOfSymbolAtPoint use of ActWin is now configurable with a
+myriad of Options (some 100 Options) covering definition of commands
+(mapping, command and abbreviations) controlling Scala and ActWin
+navigation; Options for how information is displayed in the Scala
+and ActWin windows and Options for highlights and signs.
+Now, by default, the "uses_of_symbol_at_point" uses the ActWin.
+For all available Options, see the newly added PROPERTIES file.
+Four new Option "kind"s have been defined supporting Option String 
+types specialized for "commands", "highlight" definitions, 
+highlight "group" names and "highlight" or "group" name.
+As examples (see PROPERTIES file), the (current) default value
+of 'tailor-actwin-display-actwin-cursor-line-highlight' is
+"cterm=bold ctermfg=DarkYellow ctermbg=Cyan" and the (current)
+default value of 'tailor-actwin-display-scala-color-line-kinds-marker-linehl'
+is "Search" (a highlight group name).
+In the future, rather than using the existing options_project.vim
+and options_user.vim files, Options will be able to be set
+using a (standard Java format) properties file. While some code
+to do this has been checkin, it has not been extensively tested.
+
+ActWin's behavior is defined by the client that creates an instance.
+
+The UsesOfSymbolAtPoint can now use ActWin (as alternate to Quickfix
+window).
+
+Options:
+'tailor-uses-of-symbol-at-point-window' : 'actwin' (default) or 'quickfix'
+
+Per use of the ActWin, there are numerous Options. For now this is
+an initial set that control how lines in Scala files and in the ActWin
+itself are highlighted:
+
+Use sign in Scala files (all lines highlighted at once):
+'tailor-uses-of-symbol-at-point-use-actwin-display-scala-sign-enable' : 0 or 1
+
+Use a (sign-based) color line in Scala files (current line only):
+'tailor-uses-of-symbol-at-point-use-actwin-display-scala-color-line-enable' : 0 or 1
+
+Use a color column in Scala files (current column only):
+'tailor-uses-of-symbol-at-point-use-actwin-display-scala-color-column-enable' : 0 or 1
+
+Use a cursor line in ActWin (current line only):
+'tailor-uses-of-symbol-at-point-use-actwin-display-actwin-cursor-line-enable' : 0 or 1
+
+Use a highlight line in ActWin (current line only):
+'tailor-uses-of-symbol-at-point-use-actwin-display-actwin-highlight-line-enable' : 0 or 1
+
+Use a (sign-based) color line in ActWin (current line only):
+'tailor-uses-of-symbol-at-point-use-actwin-display-actwin-sign-enable' : 0 or 1
+
+Ultimately all ActWin commands and highlight features (colors and text)
+will be Option based.
+
+
+
+Added delete entry commands to ActWin.
+Merged the options default.vim file into the defined.vim file.
+Added highlight parsing code.
+Changed functions to return error message rather than throw exceptions.
+Added cterm/gui color management code.
+Clean up DoToggleCmds function so that on exit mappings, commands 
+and abbrs are removed.
+Fixed property file reader so that values can be Dictionaries.
+Toggling Actwin "scala" and "actwin" features can now be done 
+with Option based :map, :cabbr and :command.
+Got color cursor toggling working.
+Got color cursor working.
+Invoking built-in command overrides no longer are placed in the
+command line history.
+Fixed both window/source display rendering.
+Scala window per-line sign highlighting option now supported.
+Fixed <F2>, <F3>, <F4> toggle keys.
+Options can now be defined in property files.
+
+Can print out current Options as properties.
+
+Added logging warning messages.
+
+Now property.vim file reading code mirrors Java's Properties code.
+
+Added property.vim which can convert properties to Options.
+
+Added "sign" base highlighting to actwin text.
+
+Generalized the definition and create to both "source" and "actwin"
+commands (keymap cmds, leader-based cmds and the redefinition of
+existing cmds using abbreviations).
+
+Added key_map, builtin_cmd and user_cmd "fasthelp" toggle displays
+using \<F2>, \<F3> and \<F4>.
+
+Added ActWin client-defined help and keymappings.
+
+Added multi-line content support.
+
+As an Option, the actwin will allow for an
+alternate way to visualize and act upon compiler error from standard
+quickfix; but, quickfix will, as an Option, still be available.
+Use of actwin is not documented nor does any code actually use it
+yet, but a flavor of how it might work can be seen by executing:
+
+        vimside#actwin#TestQuickFix()
+
+Go to the project: data/vimside/projects/simple, 
+"vi src/main/scala/com/megaannum/Foo.scala" and then call the
+above function.
+
+See the functions:
+
+        MakeKeyMappings
+        MakeUserCommands
+        MakeOverrideCommands
+
+for some mappings.
+
+## Previous checkin
+
+Make sure when 'sign' definition is added via vimside#sign#AddCategory
+that the data has an 'ids' entry.
+Made sure that when a 'sign' Clear function is called that the associate
+id is removed from the 'ids' Dictionary.
+There is now an Option, 'sign-start-place-id' with default value 2656
+which is the value of the first 'sign' id. Subsequent ids are one greater
+than there predecessor.
+
+The latest checkin included an initial (un-tested and thus not usable) 
+snapshot of the debug code along with a "sign" module that supports
+quickfix window, location window and debug breakpoint visualization.
+Each "sign" has (currently) three (manditory) attributes that can be set by 
+the Vimside user: linehl, text and texthl (icon not support yet).
+A "sign" has a "kind" and a "category". For the quickfix window,
+compile errors, etc., the "category" is "QuickFix" and the "kinds"
+are "error", "warn", "info" and "marker". So, that is 4 kinds of
+signs where each sign has 3 attributes which means for "QuickFix" there
+are 12 Options that control how things can be displayed.
+The "LocationList" window category has two kinds: "info" and "marker" and,
+thus, has 6 Options. The "Debug" category has kinds: "active",
+"pasive" and "marker" for 9 Options - but, again, the debug code
+is untested.
+
+A "marker" kind is used to indicate the starting or current cursor position
+and can be enabled/disabled via Option for the 'uses of symbol at point'
+command.
+
+In addition, for each part of Vimside that can use the new sign feature
+there is an Option used to determine if signs should be generated.
+
+The new sign capability can be used during the display of QuickFix 
+compile errors for both normal and SBT compiles. And, it can be used
+as part of the action "use of symbol at point" command
+
+    List all references to the symbol under the cursor.
+    autocmd FileType scala nmap <silent> <Leader>vr :call vimside#command#UsesOfSymbolAtPoint()<CR>
+
+New Options and default values:
+
+    quickfix
+
+        'sign-quickfix-error-linehl'       'Error'
+        'sign-quickfix-error-text'         'E>'
+        'sign-quickfix-error-texthl'       'Todo'
+
+        'sign-quickfix-warn-linehl'        'StatusLine'
+        'sign-quickfix-warn-text'          'W>'
+        'sign-quickfix-warn-texthl'        'Todo'
+
+        'sign-quickfix-info-linehl'        'DiffAdd'
+        'sign-quickfix-info-text'          'I>'
+        'sign-quickfix-info-texthl'        'TODO'
+
+        'sign-quickfix-marker-linehl'      'Search'
+        'sign-quickfix-marker-text'        'M>'
+        'sign-quickfix-marker-texthl'      'Ignore'
+
+    locationlist
+
+        'sign-locationlist-info-linehl'    'DiffAdd'
+        'sign-locationlist-info-text'      'I>'
+        'sign-locationlist-info-texthl'    'TODO'
+
+        'sign-locationlist-marker-linehl'  'Search'
+        'sign-locationlist-marker-text'    'M>'
+        'sign-locationlist-marker-texthl'  'Ignore'
+
+    debug
+
+        'sign-debug-active-linehl'         'DiffText'
+        'sign-debug-active-text'           'A>'
+        'sign-debug-active-texthl'         'SpellCap'
+
+        'sign-debug-pending-linehl'        'DiffAdd'
+        'sign-debug-pending-text'          'P>'
+        'sign-debug-pending-texthl'        'DiffDelete'
+
+        'sign-debug-marker-linehl'         'Search'
+        'sign-debug-marker-text'           'M>'
+        'sign-debug-marker-texthl'         'Ignore'
+
+
+    sbt
+      tailor-sbt-use-signs                 '1'
+
+    show-errors-and-warnings
+      tailor-show-errors-and-warnings-use-signs '1'
+
+    full-typecheck-finished
+      tailor-full-typecheck-finished-use-signs '1'
+
+    uses-of-symbol-at-point
+      tailor-uses-of-symbol-at-point-use-signs '1'
+      tailor-uses-of-symbol-at-point-use-sign-kind-marker '1'
+
+      tailor-uses-of-symbol-at-point-window
+          quickfix (default)
+          mixed
+
+
+## Previous checkin
+
+With this checkin, there are features to expore running
+multiple Vim processes connected to the same Ensime Server.
+
+Vimside has been tested with multiple Vim processes. One Vim
+can start the Ensime Server (normal start command) and a second
+Vim editor (not window, but another Vim process) in the same
+project is asked to start the Ensime server ('\<Leader> vs'), it will find the
+Ensime port file and simply connect to the already running server.
+This seems to work with the caveats: 
+
+    - If the configuration is to stop the server when Vim is exited,
+    then when the Vim editor that started the server exits, then
+    the server is stopped even if other Vim editor are still connected
+    to it. Have to implement some kind of Vim connection counter if
+    this becomes an issue.
+
+    - If the Ensime configuration file is changed between starting the
+    first and second Vim, things might not work (since the Ensime 
+    server will only know about the configuration that the first
+    Vim process passed to it).
+
+If the configuration is that the Ensime server is not stopped when
+the launching Vim process is exited, then any Vim process that
+connects to the server can explicitly generate the stop server
+command ('\<Leader> vS') to kill the server (or using 'ps' and 'kill -9').
+
+Previously, when Vim stopped, the Ensime server was stopped 
+(with a call to shut it down). Now, this is optional.
+There is a new Options 'ensime-shutdown-on-vim-exit' which if
+set to true (1), then the old behavior is seen; the Ensime server
+is shutdown when the Vim editor is exited. But, now if the
+Option is false (0), then when Vim stops, the Ensime server
+is not stopped. To stop the server one must explicitly issue the 
+command:
+  nmap <silent> \<Leader>vS :call vimside#command#StopEnsime()<CR>
+This lets one save the running server between Vim sessions and, in
+addition, allows one to use multiple Vim processes to edit the
+same project's files. To enable this, Vimside was also changed so
+that if it finds an Ensime port file, rather than start Ensime
+it reads the file, gets the port, and tries to connect to Ensime.
+If this fails, then it starts Ensime.
+A note of caution, if you change your Ensime config file between
+Vim invocations but do not re-start the Ensime server, the second
+Vim invocation will be talking to an Ensime server which is out of sync.
+Default value for this Options is true, the old behavior -
+shutdown Ensime when Vim exits.
+
+Add Option 'vimside-log-file-use-pid'. If true then current Vim
+process id is a suffix to the log file name. Useful when you
+have more than one Vim process or if you are running a series
+of tests on Vimside code and wish to generate separate log file
+for each test. Default is false, no pid suffix.
+
+Add Option 'ensime-log-file-use-pid'. If true then the Ensime log
+file as a suffix has the process id of the Vim process that started 
+it.  Useful to coordinate Ensime log files with Vim process that
+launched the server. Default is false, no pid suffix.
+
+Removed the call to vimside#scheduler#ClearAuto during
+shutdown; the function did not exist.
+
+The Option 'tailor-sbt-error-read-size' is used as the size of 
+the socket buffer used to read results returned by a SBT compile
+request. This should be large enough to read all of the errors.
+If it is too small, then only a partial read occurs and the
+code that converts the errors to Quickfix window entries may
+fail.  Default value is 10000 which, hopefully, is big enough for
+most SBT compile error results.
+
+The Option 'vimside-port-file-wait-time' is the time to wait
+after starting the Ensime Server before attempting to read the
+port file generated by the server (the port is the server socket 
+port). Default is 4 seconds, but anywhere from 0 to 5 seconds might
+be OK.
+
+## Type Inspector checkin
+
+An earlier checkin, there is the first cut of the Type and 
 Package Inspector. There will certainly be bugs. 
 For types, place cursor over type and enter \<Leader>ti.
 For package, place cursor over package path and enter \<Leader>tp.
@@ -404,9 +720,8 @@ copy `example_options_user.vim` to `options_user.vim`.
     > cd $HOME/.vim/data/vimside
     > /bin/cp example_options_user.vim options_user.vim
 
-Then, in `options_user.vim` uncomment the following two lines:
+Then, in `options_user.vim` uncomment the following line:
 
-    call a:option.Set("test-ensime-file-use", 1)
     call a:option.Set("ensime-config-file-name", "ensime_config.vim")
 
 This tells Vimside to use the test project code and to use the
@@ -502,8 +817,6 @@ basis), but enabling the above Option is all that is need in this file.
       " To run against ensime test project code
       " Location of test directory
       call owner.Set("test-ensime-file-dir", s:full_dir)
-      " Uncomment to run against demonstration test code
-      call owner.Set("test-ensime-file-use", 1)
       " The Ensime Config information is in a file called 'ensime_config.vim'
       call owner.Set("ensime-config-file-name", "ensime_config.vim")
       "--------------

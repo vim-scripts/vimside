@@ -73,7 +73,7 @@ set cpo&vim
 " ----------------------------------------------------------------------
 " See bottom of the plugin/vimside.vim file for the usage of these.
 let s:enable_logging = exists("g:Vimside_Enable_Pre_Initialization_Logging")
-  \ && g:Vimside_Enable_Pre_Initialization_Logging
+\ && g:Vimside_Enable_Pre_Initialization_Logging
 
 if s:enable_logging
   let s:LOG_DIR = g:Vimside_Enable_Pre_Initialization_Logging_Dir
@@ -101,28 +101,31 @@ call s:LOG("vimside#options#manager: s:full_path=". s:full_path)
 let s:full_dir=fnamemodify(s:full_path, ':h')
 call s:LOG("vimside#options#manager: s:full_dir=". s:full_dir)
 
-let s:vimside_dir = resolve(s:full_dir . '/../../../data/vimside/')
-call s:LOG("vimside#options#manager: s:vimside_dir=". s:vimside_dir)
+let s:data_vimside_dir = resolve(s:full_dir . '/../../../data/vimside/')
+call s:LOG("vimside#options#manager: s:data_vimside_dir=". s:data_vimside_dir)
 
-if ! exists("g.vimside.options")
+if ! exists("g:vimside")
+  let g:vimside = {}
+endif
+if ! exists("g:vimside.options")
   let g:vimside['options'] = {}
 endif
-if ! exists("g.vimside.options.keyvals")
+if ! exists("g:vimside.options.keyvals")
   let g:vimside.options['keyvals'] = {}
 endif
-if ! exists("g.vimside.options.defined")
+if ! exists("g:vimside.options.defined")
   let g:vimside.options['defined'] = {}
 endif
-if ! exists("g.vimside.options.user")
+if ! exists("g:vimside.options.user")
   let g:vimside.options['user'] = {}
 endif
-if ! exists("g.vimside.options.user.keyvals")
+if ! exists("g:vimside.options.user.keyvals")
   let g:vimside.options.user['keyvals'] = {}
 endif
-if ! exists("g.vimside.options.default")
+if ! exists("g:vimside.options.default")
   let g:vimside.options['default'] = {}
 endif
-if ! exists("g.vimside.options.default.keyvals")
+if ! exists("g:vimside.options.default.keyvals")
   let g:vimside.options.default['keyvals'] = {}
 endif
 
@@ -143,7 +146,7 @@ function! vimside#options#manager#UpdateOptionPrivate(key, value) dict
   endif
   let keyvals[a:key] = a:value
 endfunction
-function! vimside#options#manager#HasOptionPrivate(key) dict
+  function! vimside#options#manager#HasOptionPrivate(key) dict
   let keyvals = self.keyvals
   return has_key(keyvals, a:key)
 endfunction
@@ -157,6 +160,9 @@ function! vimside#options#manager#RemoveOptionPrivate(key) dict
     unlet keyvals[a:key]
   endif
 endfunction
+
+let s:option_user_file_name = "options_user.vim"
+let s:vimside_properties_file_name = "vimside.properties"
 
 function! s:DefineOptionMethods(owner)
   let owner = a:owner
@@ -235,7 +241,7 @@ function! vimside#options#manager#CheckOption(key) dict
     \ && ! self.options.user.Has(a:key)
     \ && ! self.options.default.Has(a:key)
     echoerr "ERROR: Vimside missing option: " . a:key
-  endif
+endif
 endfunction
 function! vimside#options#manager#GetOptionDefinitions() dict
   return self.options.defined
@@ -288,45 +294,90 @@ endfunction
 
 " Global user overrides of default values
 function! vimside#options#manager#LoadUser()
-call s:LOG("vimside#options#manager#LoadUser: TOP")
+  call s:LOG("vimside#options#manager#LoadUser: TOP")
 
   function! s:CheckDefinedFunc(key, value) dict
-    let defined = g:vimside.options.defined
-    let default = g:vimside.options.default
-    if has_key(defined, a:key)
-      let def = defined[a:key]
-      call vimside#options#defined#CheckValue(def, a:value, g:vimside.errors)
+    let l:defined = g:vimside.options.defined
+    let l:default = g:vimside.options.default
+    if has_key(l:defined, a:key)
+      let l:def = l:defined[a:key]
+      call vimside#options#option#CheckValue(a:key, l:def, a:value, g:vimside.errors)
 
-    elseif has_key(default.keyvals, a:key)
+    elseif has_key(l:default.keyvals, a:key)
       " TODO when OPTION_KEY_KIND templates carries type/kind info, checkit
     else
+call s:LOG("vimside#options#manager#LoadUser.CheckDefinedFunc: key=". a:key)
       call add(g:vimside.errors, "Undefined User option: '". a:key . "'")
     endif
   endfunction
 
   let g:vimside.options.user['check'] = function("s:CheckDefinedFunc")
 
-  " Source "options_user.vim" file if it exists
-  let l:option_file_name = "options_user.vim"
-  let l:tmpfile = s:vimside_dir .'/'. l:option_file_name
-call s:LOG("vimside#options#manager#LoadUser: l:tmpfile=". l:tmpfile)
-  if filereadable(l:tmpfile)
-call s:LOG("vimside#options#manager#LoadUser: sourcing=". l:tmpfile)
-    execute ":source " . l:tmpfile
-    call g:VimsideOptionsUserLoad(g:vimside.options.user)
-  else
-    let files = globpath(&rtp, 'data/vimside/options_user.vim')
-call s:LOG("vimside#options#manager#LoadUser: files=". string(files))
-    for file in files
-      if file != l:tmpfil &&e filereadable(file)
-call s:LOG("vimside#options#manager#LoadUser: sourcing=". file)
-        execute ":source " . file
-        call g:VimsideOptionsUserLoad(g:vimside.options.user)
-        break
-      endif
-    endfor
-  endif
-call s:LOG("vimside#options#manager#LoadUser: BOTTOM")
+  "
+  " load options from options file
+  "
+  function! s:UserOptionsFile()
+    let l:user_options = g:vimside.options.user
+
+    let l:tmpfile = s:data_vimside_dir .'/'. s:option_user_file_name
+call s:LOG("vimside#options#manager#LoadUser: UserOptionsFile l:tmpfile=". l:tmpfile)
+    if filereadable(l:tmpfile)
+call s:LOG("vimside#options#manager#LoadUser: UserOptionsFile sourcing=". l:tmpfile)
+      execute ":source " . l:tmpfile
+      call g:VimsideOptionsUserLoad(l:user_options)
+    else
+      let l:files = split(globpath(&rtp, 'data/vimside/'. s:option_user_file_name), "\n")
+call s:LOG("vimside#options#manager#LoadUser: UserOptionsFile l:files=". string(l:files))
+      for file in l:files
+        if file != l:tmpfil &&e filereadable(file)
+call s:LOG("vimside#options#manager#LoadUser: UserOptionsFile sourcing=". file)
+          execute ":source " . file
+          call g:VimsideOptionsUserLoad(l:user_options)
+          break
+        endif
+      endfor
+    endif
+  endfunction
+
+  "
+  " load options from property file
+  "
+  function! s:UserPropertiesFile()
+    let l:user_options = g:vimside.options.user
+
+    let l:tmpfile = s:data_vimside_dir .'/'. s:vimside_properties_file_name
+call s:LOG("vimside#options#manager#LoadUser: UserPropertiesFile l:tmpfile=". l:tmpfile)
+    let [l:found, l:keys_value_list] = vimside#property#ParseFile(l:tmpfile)
+    if l:found
+call s:LOG("vimside#options#manager#LoadUser: UserPropertiesFile keys_value_list=". string(l:keys_value_list))
+      let l:options = vimside#property#ConvertToOptions(l:keys_value_list)
+      for [l:name, l:value] in l:options
+call s:LOG("vimside#options#manager#LoadUser: UserPropertiesFile name==". l:name .", value=". string(l:value) . ", type=" . type(l:value))
+        call l:user_options.Set(l:name, l:value)
+        unlet l:value
+      endfor
+    else
+      let l:files = split(globpath(&rtp, 'data/vimside/'. s:vimside_properties_file_name), "\n")
+call s:LOG("vimside#options#manager#LoadUser: UserPropertiesFile l:files=". string(l:files))
+      for file in l:files
+        let [l:found, l:keys_value_list] = vimside#property#ParseFile(file)
+        if l:found
+call s:LOG("vimside#options#manager#LoadUser: UserPropertiesFile loading=". file)
+          let l:options = vimside#property#ConvertToOptions(l:keys_value_list)
+          for [l:name, l:value] in l:options
+            call l:user_options.Set(l:name, l:value)
+            unlet l:value
+          endfor
+          break
+        endif
+      endfor
+    endif
+  endfunction
+
+  call s:UserOptionsFile()
+  call s:UserPropertiesFile()
+
+  call s:LOG("vimside#options#manager#LoadUser: BOTTOM")
 endfunction
 
 " ---------------------------------------------------------------------
@@ -338,49 +389,113 @@ function! vimside#options#manager#LoadProject(errors)
 call s:LOG("vimside#options#manager#LoadProject: TOP")
   let l:errors = a:errors
 
-  let [found, l:look_local] = g:vimside.GetOption('vimside-project-options-enabled')
-  if found
-    if l:look_local
-call s:LOG("vimside#options#manager#LoadProject: look_local")
-      let [found, l:file_name] = g:vimside.GetOption('vimside-project-options-file-name')
-      if found
-call s:LOG("vimside#options#manager#LoadProject: l:file_name=". l:file_name)
-        let l:option_file_name = "options_user.vim"
+  function! s:ProjectOptionsFile(errors)
+    let l:errors = a:errors
+    let l:user_options = g:vimside.options.user
 
-        " Now look in current directory and walk up directories until ensime
-        let dir = getcwd()
-call s:LOG("vimside#options#manager#LoadProject: dir=". dir)
+    " look for and read project options file
+    let [found, l:file_name] = g:vimside.GetOption('vimside-project-options-file-name')
+    if found
+call s:LOG("vimside#options#manager#LoadProject: ProjectOptionsFile l:file_name=". l:file_name)
 
-        " Do not want to re-source the data/vimside/options_user.vim file
-        if dir == s:vimside_dir && l:option_file_name == l:file_name
-          let dir = fnamemodify(dir, ":h")
-call s:LOG("vimside#options#manager#LoadProject: up one dir=". dir)
+    " Now look in current directory and walk up directories until ensime
+    let dir = getcwd()
+call s:LOG("vimside#options#manager#LoadProject:  ProjectOptionsFiledir=". dir)
+
+    " Do not want to re-source the data/vimside/options_user.vim file
+    if dir == s:data_vimside_dir && s:option_user_file_name == l:file_name
+      let dir = fnamemodify(dir, ":h")
+call s:LOG("vimside#options#manager#LoadProject:  ProjectOptionsFileup one dir=". dir)
+    endif
+
+    while dir != '/'
+      let l:tmp_file = dir . '/' . l:file_name
+call s:LOG("vimside#options#manager#LoadProject:  ProjectOptionsFilel:tmp_file=". l:tmp_file)
+      if filereadable(l:tmp_file)
+        break
+      endif
+      let dir = fnamemodify(dir, ":h")
+call s:LOG("vimside#options#manager#LoadProject:  ProjectOptionsFileup one dir=". dir)
+    endwhile
+
+    if dir != '/' && dir != s:data_vimside_dir && g:VimsideCheckDirectoryExists(dir, "r-x", l:errors)
+      let l:option_file = dir . "/" . l:file_name
+call s:LOG("vimside#options#manager#LoadProject:  ProjectOptionsFilel:option_file=". l:option_file)
+      execute ":source " . l:option_file
+      call g:VimsideOptionsProjectLoad(l:user_options)
+    endif
+
+    else
+      call s:LOG("vimside#options#manager#LoadProject:  ProjectOptionsFileOption not found: 'vimside-local-options-user-file-name'")
+    endif
+  endfunction
+
+  function! s:ProjectPropertiesFile(errors)
+    let l:user_options = g:vimside.options.user
+    let l:errors = a:errors
+
+    " look for and read project property file
+    let [found, l:file_name] = g:vimside.GetOption('vimside-project-properties-file-name')
+    if found
+call s:LOG("vimside#options#manager#LoadProject: ProjectPropertiesFile l:file_name=". l:file_name)
+
+      " Now look in current directory and walk up directories until ensime
+      let dir = getcwd()
+call s:LOG("vimside#options#manager#LoadProject: ProjectPropertiesFile dir=". dir)
+
+      " Do not want to re-source the data/vimside/options_user.vim file
+      if dir == s:data_vimside_dir && s:option_user_file_name == l:file_name
+        let dir = fnamemodify(dir, ":h")
+call s:LOG("vimside#options#manager#LoadProject: ProjectPropertiesFile up one dir=". dir)
+      endif
+
+      while dir != '/'
+        let l:tmp_file = dir . '/' . l:file_name
+call s:LOG("vimside#options#manager#LoadProject: ProjectPropertiesFile l:tmp_file=". l:tmp_file)
+        if filereadable(l:tmp_file)
+          break
         endif
+        let dir = fnamemodify(dir, ":h")
+call s:LOG("vimside#options#manager#LoadProject: ProjectPropertiesFile up one dir=". dir)
+      endwhile
 
-        while dir != '/'
-          let l:tmp_file = dir . '/' . l:file_name
-call s:LOG("vimside#options#manager#LoadProject: l:tmp_file=". l:tmp_file)
-          if filereadable(l:tmp_file)
-            break
-          endif
-          let dir = fnamemodify(dir, ":h")
-call s:LOG("vimside#options#manager#LoadProject: up one dir=". dir)
-        endwhile
+      if dir != '/' && dir != s:data_vimside_dir && g:VimsideCheckDirectoryExists(dir, "r-x", l:errors)
+        let l:property_file = dir . "/" . l:file_name
+call s:LOG("vimside#options#manager#LoadProject: ProjectPropertiesFile l:property_file=". l:property_file)
 
-        if dir != '/' && dir != s:vimside_dir && g:VimsideCheckDirectoryExists(dir, "r-x", l:errors)
-          let l:option_file = dir . "/" . l:file_name
-call s:LOG("vimside#options#manager#LoadProject: l:option_file=". l:option_file)
-          execute ":source " . l:option_file
-          call g:VimsideOptionsProjectLoad(g:vimside.options.user)
+        let [l:found, l:keys_value_list] = vimside#property#ParseFile(l:property_file)
+        if l:found
+call s:LOG("vimside#options#manager#LoadProject: ProjectPropertiesFile loading=". l:property_file)
+          let l:options = vimside#property#ConvertToOptions(l:keys_value_list)
+          for [l:name, l:value] in l:options
+            call l:user_options.Set(l:name, l:value)
+            unlet l:value
+          endfor
         endif
-
-      else
-        call add(l:errors, "Option not found: 'vimside-local-options-user-file-name'")
       endif
     endif
+  endfunction
+
+  let [found, l:look_local] = g:vimside.GetOption('vimside-project-options-enabled')
+  if found 
+call s:LOG("vimside#options#manager#LoadProject: look_local=". l:look_local)
+    if l:look_local
+      call s:ProjectOptionsFile(l:errors)
+    endif
   else
-    call add(l:errors, "Option not found: 'vimside-local-options-user-enabled'")
+    call s:LOG("vimside#options#manager#LoadProject: Option not found: 'vimside-local-options-user-enabled'")
   endif
+
+  let [found, l:look_local] = g:vimside.GetOption('vimside-project-properties-enabled')
+  if found 
+call s:LOG("vimside#options#manager#LoadProject: look_local=". l:look_local)
+    if l:look_local
+      call s:ProjectPropertiesFile(l:errors)
+    endif
+  else
+    call s:LOG("vimside#options#manager#LoadProject: Option not found: 'vimside-local-properties-user-enabled'")
+  endif
+
 call s:LOG("vimside#options#manager#LoadProject: BOTTOM")
 endfunction
 
@@ -397,7 +512,24 @@ call s:LOG("vimside#options#manager#Load: TOP")
 
   " This file loads default options values from "default.vim"
   " at g:vimside.options.default.options
-  call vimside#options#default#Load(g:vimside.options.default)
+
+  " REMOVE OLD
+  " call vimside#options#default#Load(g:vimside.options.default)
+
+
+
+  " Now load the defaults from the Option definitions
+  let l:keyvals = g:vimside.options.default.keyvals
+  for [l:key, l:definition] in items(g:vimside.options.defined)
+    if type(l:definition) == type({})
+      if has_key(l:definition, 'value')
+        let l:keyvals[l:key] = l:definition.value
+      endif
+    else
+      echoerr "Bad define type for ". l;key
+    endif
+  endfor
+  call vimside#options#defined#SetUndefined(l:keyvals)
 
   " Global user overrides of default values
   call vimside#options#manager#LoadUser()
@@ -419,63 +551,6 @@ call s:LOG("vimside#options#manager#Load: TOP")
   " ---------------------------------------------
   " Locate the dot ensime file and directory
   " ---------------------------------------------
-
-if 0 " XXXX
-  let [found, l:efname] = g:vimside.GetOption('ensime-config-file-name')
-  if found
-call s:LOG("vimside#options#manager#Load: ensime-config-file-name=". l:efname)
-    let [found, l:use_test_efile] = g:vimside.GetOption('test-ensime-file-use')
-    if found
-call s:LOG("vimside#options#manager#Load: l:use_test_efile=". l:use_test_efile)
-      if l:use_test_efile
-        let [found, l:test_dir] = g:vimside.GetOption('test-ensime-file-dir')
-        if found
-call s:LOG("vimside#options#manager#Load: test-ensime-file-dir=". l:test_dir)
-          if g:VimsideCheckDirectoryExists(l:test_dir, "r-x", l:errors)
-            let l:ensime_config_file = l:test_dir . "/" . l:efname
-call s:LOG("vimside#options#manager#Load: test l:ensime_config_file=". l:ensime_config_file)
-          endif
-
-        else
-          let l:ensime_config_file = s:vimside_dir . "/" . l:efname
-        endif
-
-      else
-
-        " look in current directory and walk up directories until ensime
-        " config file is found.
-        let dir = getcwd()
-call s:LOG("vimside#options#manager#Load: dir=". dir)
-        while dir != '/'
-          let l:tmp_config_file = dir . '/' . l:efname
-call s:LOG("vimside#options#manager#Load: l:tmp_config_file=". l:tmp_config_file)
-          if filereadable(l:tmp_config_file)
-            break
-          endif
-          let dir = fnamemodify(dir, ":h")
-call s:LOG("vimside#options#manager#Load: dir=". dir)
-        endwhile
-
-        if dir == '/'
-          call add(l:errors, "Can find ensime config file: '" . l:efname ."'")
-          return
-        else
-          if g:VimsideCheckDirectoryExists(dir, "r-x", l:errors)
-            let l:ensime_config_file = dir . "/" . l:efname
-call s:LOG("vimside#options#manager#Load: l:ensime_config_file=". l:ensime_config_file)
-          endif
-        endif
-
-      endif
-
-    else
-      call add(l:errors, "Option not found: 'test-ensime-file-use'")
-    endif
-
-  else
-    call add(l:errors, "Option not found: 'ensime-config-file-name'")
-  endif
-endif " 0 XXXX
 
   let [found, l:efname] = g:vimside.GetOption('ensime-config-file-name')
   if found
@@ -573,7 +648,12 @@ call s:LOG("vimside#options#manager#Load: l:ensime_scala_version=". l:ensime_sca
     endif
 call s:LOG("vimside#options#manager#Load: l:vimside_scala_version=". l:vimside_scala_version)
 
-    if l:ensime_scala_version != l:vimside_scala_version
+    " Only check major versions
+    " Need to strip off trailing ".0" or ".1", etc.
+    let l:esv = strpart(l:ensime_scala_version, 0, 4)
+    let l:vsv = strpart(l:vimside_scala_version, 0, 4)
+
+    if l:esv != l:vsv
       call add(l:errors, "Scala versions do not match: vimside:'". l:vimside_scala_version ."' and ensime:'". l:ensime_scala_version ."'")
       return
     endif
@@ -772,6 +852,159 @@ call s:LOG("vimside#options#manager#Load: BOTTOM")
 endfunction
 
 
+" args:
+"   optional:
+"     filename: file to write to
+"     force: 1 overwrite 
+" example: call vimside#options#manager#OutputProperties('PROPERTIES', 1)
+function! vimside#options#manager#OutputProperties(...)
+  let l:call = "call vimside#options#manager#OutputProperties("
+  if a:0 == 1
+    let l:has_file = 1
+    let l:filename = a:1
+    let l:force = 0
+
+    let l:call .= "'". l:filename ."'"
+  elseif a:0 == 2
+    let l:has_file = 1
+    let l:filename = a:1
+    let l:force = a:2
+
+    let l:call .= "'". l:filename ."', ". l:force
+  else
+    let l:has_file = 0
+  endif
+  let l:call .= ")"
+    
+  if l:has_file
+    let l:s = getfsize(l:filename)
+    if l:s == 0
+      echoerr "Can not write to directory: ". l:filename
+      return
+    elseif l:s == -1
+      " file does not exists
+    else
+      " file exists
+      if ! l:force
+        echoerr "Can not overwrite file: ". l:filename ." use force==1"
+        return
+      endif
+    endif
+
+    execute "redir >> ". l:filename
+
+    let l:is_silent = 1
+  else
+    let l:is_silent = 0
+  endif
+  " call vimside#options#defined#Load(g:vimside.options)
+
+  let l:datetime = exists("*strftime")
+          \ ? strftime("%Y%m%d-%H%M%S: ") : "" . localtime() . ": "
+  if l:is_silent
+    silent echo "#"
+    silent echo "# Vimside Options"
+    silent echo "# Generated on: ". l:datetime
+    silent echo "# By calling: ". l:call
+    silent echo "#"
+  else
+    echo "#"
+    echo "# Vimside Options"
+    echo "# Generated on: ". l:datetime
+    echo "# By calling: ". l:call
+    echo "#"
+  endif
+
+  let l:defined = g:vimside.options.defined
+  let l:user = g:vimside.options.user
+  let l:default = g:vimside.options.default
+
+  let l:no_value_set = '<No Value Set>'
+
+  for l:opt in sort(keys(l:defined))
+    let l:key = substitute(l:opt, '-', '.', "g")
+    let l:value = l:defined[l:opt] 
+
+    if l:is_silent
+      silent echo "# Option: ". l:opt
+      if has_key(l:value, 'parent')
+        silent echo "# parent: ". l:value.parent
+      endif
+      silent echo "# description:"
+    else
+      echo "# Option: ". l:opt
+      if has_key(l:value, 'parent')
+        echo "# parent: ". l:value.parent
+      endif
+      echo "# description:"
+    endif
+
+    if has_key(l:value, 'description')
+      for l:s in l:value['description']
+        if l:is_silent
+          silent echo "#   ". l:s
+        else
+          echo "#   ". l:s
+        endif
+      endfor
+    endif
+
+    if has_key(l:default.keyvals, l:opt) 
+      let l:current_value= l:default.keyvals[l:opt]
+      if l:is_silent
+        silent echo "# default value: ". string(l:current_value)
+      else
+        echo "# default value: ". string(l:current_value)
+      endif
+    else
+      if l:is_silent
+        silent echo "# default value: ". l:no_value_set
+      else
+        echo "# default value: ". l:no_value_set
+      endif
+    endif
+
+    if has_key(l:user.keyvals, l:opt) 
+      let l:current_value= l:user.keyvals[l:opt]
+      if l:is_silent
+        silent echo "# user value: ". string(l:current_value)
+      else
+        echo "# user value: ". string(l:current_value)
+      endif
+    else
+      if l:is_silent
+        silent echo "# user value: ".  l:no_value_set
+      else
+        echo "# user value: ".  l:no_value_set
+      endif
+    endif
+
+    if exists("l:current_value")
+      if l:is_silent
+        silent echo l:key ."=". string(l:current_value)
+      else
+        echo l:key ."=". string(l:current_value)
+      endif
+      unlet l:current_value
+    else
+      if l:is_silent
+        silent echo "# ". l:key ."=". l:no_value_set
+      else
+        echo "# ". l:key ."=". l:no_value_set
+      endif
+    endif
+    if l:is_silent
+      silent echo " "
+    else
+      echo " "
+    endif
+  endfor
+
+  if l:has_file
+    execute "redir END"
+  endif
+
+endfunction
 
 " ==============
 "  Restore: {{{1

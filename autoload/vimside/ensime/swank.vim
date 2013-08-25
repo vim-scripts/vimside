@@ -663,12 +663,13 @@ function! s:HandleSimpleEvent(sexp)
   let sexp = a:sexp
 call s:LOG("HandleSimpleEvent ".string(sexp)) 
 
-  let [found, kword] = vimside#sexp#Get_KeywordValue(sexp) 
+  let [found, event] = vimside#sexp#Get_KeywordValue(sexp) 
   if found
-    let Ehandler = get(g:vimside.event_handlers, kword, g:vimside.unknown_event_handler)
-    call Ehandler(kword)
+    let Ehandler = get(g:vimside.event_handlers, event, g:vimside.unknown_event_handler)
+    call Ehandler(event)
+    call vimside#EventSignal(event)
   else
-    call s:ERROR("HandleSimpleEvent: ". kword) 
+    call s:ERROR("HandleSimpleEvent: ". event) 
   endif
 endfunction
 
@@ -691,11 +692,13 @@ call s:LOG("HandleComplexEvent ".string(children))
   if found
     let Ehandler = get(g:vimside.event_handlers, value1, g:vimside.unknown_event_handler)
     call Ehandler(value1, child2)
+    call vimside#EventSignal(value1, child2)
   else
     let [found, value2] =  vimside#sexp#Get_KeywordValue(child2) 
     if found
       let Ehandler = get(g:vimside.event_handlers, value2, g:vimside.unknown_event_handler)
       call Ehandler(value2, child1)
+      call vimside#EventSignal(value2, child1)
     else
       call s:ERROR("HandleComplexEvent: No Keyword: ". string(children)) 
     endif
@@ -1107,8 +1110,8 @@ function! g:DebugEventHandler(keyword, ...)
     if !ok
       call s:ERROR("DebugEventHandler failure to create kw dict ". kw_dic) 
     else
-      let db_handler = get(g:vimside.debug_event_handlers, ':type', g:vimside.unknown_debug_handler)
-      call db_handler(kw_dic)
+      let DB_handler = get(g:vimside.debug_event_handlers, ':type', g:vimside.unknown_debug_handler)
+      call DB_handler(kw_dic)
     endif
   else
     call s:ERROR("DebugEventHandler Too may arguments". string(a:keyword) . ", args=" . string(a:000)) 
@@ -1177,20 +1180,11 @@ endfunction
 "     :line //Int: The source line the VM stepped to.
 "  ))
 function! g:BreakpointDebugHandler(kw_dic)
-  if ! has_key(a:kw_dic, ":thread-id")
-    call s:ERROR("BreakpointDebugHandler No :thread-id ". string(a:kw_dict)) 
-    return
-  endif
-
   if ! exists("g:vimside.debug_trigger.breakpoint")
     let g:vimside.debug_trigger.breakpoint = vimside#swank#rpc#util#LoadFuncrefFromOption('swank-debug-trigger-breakpoint')
   endif
 
-  let thread_id = a:kw_dic[':thread-id']
-  let thread_name = a:kw_dic[':thread-name']
-  let file = a:kw_dic[':file']
-  let line = a:kw_dic[':line']
-  call g:vimside.debug_trigger.breakpoint(thread_id, thread_name, file, line)
+  call g:vimside.debug_trigger.breakpoint(a:kw_dic)
 endfunction
 
 

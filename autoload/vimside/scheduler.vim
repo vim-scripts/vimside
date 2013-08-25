@@ -193,8 +193,8 @@ endfunction
 
 function! vimside#scheduler#TimeTrigger()
   let [l:sec, l:msec] = vimside#scheduler#GetRealTime()
-call s:LOG("TimeTrigger: TOP [sec,msec]=[". l:sec .",". l:msec ."]")
-call s:LOG("TimeTrigger: TOP2 len(s:jobs)=". len(s:jobs))
+" call s:LOG("TimeTrigger: TOP [sec,msec]=[". l:sec .",". l:msec ."]")
+" call s:LOG("TimeTrigger: TOP2 len(s:jobs)=". len(s:jobs))
   let l:js = s:jobs
   let s:jobs = []
   let l:jobs = []
@@ -218,7 +218,7 @@ call s:LOG("TimeTrigger: TOP2 len(s:jobs)=". len(s:jobs))
         let l:jrsec = l:job[4]
         let l:jrmsec = l:job[5]
         if l:jrsec != 0 || l:jrmsec != 0
-call s:LOG("TimeTrigger: [jrsec,jrmsec]=[". l:jrsec .",". l:jrmsec ."]")
+" call s:LOG("TimeTrigger: [jrsec,jrmsec]=[". l:jrsec .",". l:jrmsec ."]")
           let m = msec + l:jrmsec
           if m >= 1000
             let l:job[2] = sec + l:jrsec + m/1000
@@ -255,7 +255,7 @@ call s:LOG("TimeTrigger: [jrsec,jrmsec]=[". l:jrsec .",". l:jrmsec ."]")
   call s:do_queued_add_job()
 
   call vimside#scheduler#FeedKeys()
-call s:LOG("TimeTrigger: BOTTOM len(s:jobs)=". len(s:jobs))
+" call s:LOG("TimeTrigger: BOTTOM len(s:jobs)=". len(s:jobs))
 endfunction
 
 function! vimside#scheduler#HaltFeedKeys()
@@ -356,28 +356,28 @@ function! vimside#scheduler#ReplaceMotionJob(name, func, charcnt, repeat)
 endfunction
 
 function! vimside#scheduler#MotionTrigger()
-call s:LOG("MotionTrigger: TOP s:total_mcounter=". s:total_mcounter .", s:mcounter=". s:mcounter)
+" call s:LOG("MotionTrigger: TOP s:total_mcounter=". s:total_mcounter .", s:mcounter=". s:mcounter)
   let s:total_mcounter += 1
   if s:mcounter <= 0
     let l:sec = -1
     let l:ccc = s:total_mcounter
-call s:LOG("MotionTrigger: l:ccc=". l:ccc)
+" call s:LOG("MotionTrigger: l:ccc=". l:ccc)
     let l:js = s:jobs
-call s:LOG("MotionTrigger: len(jobs)=". len(l:js))
+" call s:LOG("MotionTrigger: len(jobs)=". len(l:js))
     let s:jobs = []
     let l:jobs = []
 
     let s:handling_jobs=1
     try
     for l:job in l:js
-call s:LOG("MotionTrigger: for l:job=". string(l:job))
+" call s:LOG("MotionTrigger: for l:job=". string(l:job))
       let l:cc = l:job[6]
       " is it a motion job
       if l:cc != -1
         if l:cc <= l:ccc
 " call s:LOG("MotionTrigger: job=". string(job))
           try
-call s:LOG("MotionTrigger: calling job")
+" call s:LOG("MotionTrigger: calling job")
             call l:job[1]()
           catch /.*/
             call s:ERROR("MotionTrigger: ". v:exception ." at ". v:throwpoint)
@@ -429,7 +429,7 @@ call s:LOG("MotionTrigger: calling job")
   else
     let s:mcounter -= 1
   endif
-call s:LOG("MotionTrigger: BOTTOM len(s:jobs)=". len(s:jobs))
+" call s:LOG("MotionTrigger: BOTTOM len(s:jobs)=". len(s:jobs))
 endfunction
 
 function! vimside#scheduler#StartAutoMotion() 
